@@ -1,8 +1,3 @@
-export type OperationResponseStatus = {
-    success: boolean;
-    message: string;
-};
-
 export type ApiErrorResponse = {
     timestamp?: string; 
     status?: number;
@@ -12,20 +7,19 @@ export type ApiErrorResponse = {
     details?: Record<string, unknown>;
 };
 
-// Nuevos tipos para operaciones con data
-export interface CreateResponse<T> {
+// Tipo base para respuestas del backend
+export interface OperationResponseStatus {
     success: boolean;
     message: string;
-    data: T;
 }
 
-export interface UpdateResponse<T> {
-    success: boolean;
-    message: string;
-    data: T;
+// Tipos para operaciones con data (para casos donde sí retornas data)
+export interface CreateResponse<T> extends OperationResponseStatus {
+    data?: T;
 }
 
-export interface DeleteResponse {
-    success: boolean;
-    message: string;
+export interface UpdateResponse<T> extends OperationResponseStatus {
+    data?: T;
 }
+
+export interface DeleteResponse extends OperationResponseStatus {}

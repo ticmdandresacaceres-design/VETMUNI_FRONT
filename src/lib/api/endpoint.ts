@@ -1,67 +1,60 @@
-/**
- * Centralized API Endpoints Configuration
- * Base URL se configura en el client.ts
- */
-
 export const ENDPOINTS = {
-
-  // Auth endpoints
+  // =====================
+  // Auth (general)
+  // =====================
   auth: {
     login: '/auth/login',
     logout: '/auth/logout',
     register: '/auth/register',
     refresh: '/auth/refresh',
-    me: '/auth/me',
+    me: '/auth/me', 
   },
 
-  // Dueños (Owners) endpoints
+  // =====================
+  // Admin (gestiona todo)
+  // =====================
+  admin: {
+    // Dueños
+    duenios: {
+      list: '/admin/dueno',
+      create: '/admin/dueno',
+      getById: (id: string) => `/admin/dueno/${id}`,
+      update: (id: string) => `/admin/dueno/${id}`,
+      delete: (id: string) => `/admin/dueno/${id}`,
+      search: '/admin/dueno/search',
+      mascotas: (duenoId: string) => `/admin/dueno/${duenoId}/mascotas`, 
+    },
+
+    // Mascotas
+    mascotas: {
+      list: '/admin/mascota',
+      create: '/admin/mascota',
+      getById: (id: number) => `/admin/mascota/${id}`,
+      update: (id: number) => `/admin/mascota/${id}`,
+      delete: (id: number) => `/admin/mascota/${id}`,
+      search: '/admin/mascota/search',
+      vacunas: (id: number) => `/admin/mascota/${id}/vacunas`,
+      historial: (id: number) => `/admin/mascota/${id}/historial`,
+    },
+  },
+
+  // =====================
+  // Dueño (gestiona su cuenta y sus mascotas)
+  // =====================
   dueno: {
-    list: '/dueno',
-    create: '/dueno',
-    getById: (id: string) => `/dueno/${id}`,
-    update: (id: string) => `/dueno/${id}`,
-    delete: (id: string) => `/dueno/${id}`,
-    search: '/dueno/search',
-    // Mascotas de un dueño específico
-    mascotas: (duenoId: string) => `/dueno/${duenoId}/mascotas`,
-  },
+    profile: {
+      get: '/dueno/profile',
+      update: '/dueno/profile',
+    },
 
-  // Mascotas (Pets) endpoints
-  mascota: {
-    list: '/mascota',
-    create: '/mascota',
-    getById: (id: number) => `/mascota/${id}`,
-    update: (id: number) => `/mascota/${id}`,
-    delete: (id: number) => `/mascota/${id}`,
-    search: '/mascota/search',
-    // Vacunas de una mascota específica
-    vacunas: (mascotaId: number) => `/mascota/${mascotaId}/vacunas`,
-    // Historial médico
-    historial: (mascotaId: number) => `/mascota/${mascotaId}/historial`,
+    mascotas: {
+      list: '/dueno/mascota',
+      create: '/dueno/mascota',
+      getById: (id: number) => `/dueno/mascota/${id}`,
+      update: (id: number) => `/dueno/mascota/${id}`,
+      delete: (id: number) => `/dueno/mascota/${id}`,
+      vacunas: (id: number) => `/dueno/mascota/${id}/vacunas`,
+      historial: (id: number) => `/dueno/mascota/${id}/historial`,
+    },
   },
 } as const
-
-/**
- * Helper function para construir query params
- * Ejemplo: buildQueryString({ page: 1, limit: 10 }) => "?page=1&limit=10"
- */
-export function buildQueryString(params: Record<string, any>): string {
-  const query = new URLSearchParams()
-  
-  Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== '') {
-      query.append(key, String(value))
-    }
-  })
-
-  const queryString = query.toString()
-  return queryString ? `?${queryString}` : ''
-}
-
-/**
- * Type helpers para autocompletado
- */
-export type EndpointKeys = keyof typeof ENDPOINTS
-export type AuthEndpoints = typeof ENDPOINTS.auth
-export type DuenoEndpoints = typeof ENDPOINTS.dueno
-export type MascotaEndpoints = typeof ENDPOINTS.mascota

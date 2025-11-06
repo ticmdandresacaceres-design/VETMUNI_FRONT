@@ -11,17 +11,6 @@ export type DuenoNewRequest = {
     longitud: string;
 };
 
-export type DuenoUpdateRequest = {
-    nombre: string;
-    DNI: string;
-    direccion: string;
-    telefono: string;
-    correo: string;
-    password: string;
-    latitud: string;
-    longitud: string;
-};
-
 export type DuenoDetails = {
     id: string;
     nombre: string;
@@ -31,6 +20,14 @@ export type DuenoDetails = {
     correo: string;
     cantidadMascota: number;
 }
+
+export type DuenoUpdateIgnorePasswordAndLocation = {
+    nombre: string;
+    DNI: string;
+    direccion: string;
+    telefono: string;
+    correo: string;
+};
 
 // Tipos de respuesta específicos para Dueño
 export type DuenoCreateResponse = CreateResponse<DuenoDetails>;

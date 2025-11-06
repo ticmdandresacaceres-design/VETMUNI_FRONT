@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { MoreHorizontal, Edit, Trash2, Eye, Phone, Mail, IdCard } from "lucide-react"
+import { MoreHorizontal, Trash2, Eye, Phone, Mail, IdCard, Plus, Edit } from "lucide-react"
 import {
   Table,
   TableBody,
@@ -32,24 +32,29 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { useDuenoContext } from "../context/DuenoContext"
-import EditDuenoModal from "./EditDuenoModal"
 import { DuenoDetails } from "../types"
+import AddDuenoModal from "./AddDuenoModal"
+import EditDuenoModal from "./EditDuenoModal"
 
 export default function DuenosList() {
-  const { duenos, loading, error, getDuenos, deleteDueno } = useDuenoContext()
-  const [selectedDueno, setSelectedDueno] = useState<DuenoDetails | null>(null)
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const { duenos, loading, getDuenos, deleteDueno } = useDuenoContext()
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [duenoToDelete, setDuenoToDelete] = useState<DuenoDetails | null>(null)
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [duenoToEdit, setDuenoToEdit] = useState<DuenoDetails | null>(null)
+  const [isMounted, setIsMounted] = useState(false)
+
+  // Evitar problemas de hidratación
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   useEffect(() => {
-    getDuenos()
-  }, [getDuenos])
-
-  const handleEdit = (dueno: DuenoDetails) => {
-    setSelectedDueno(dueno)
-    setIsEditModalOpen(true)
-  }
+    if (isMounted) {
+      getDuenos()
+    }
+  }, [getDuenos, isMounted])
 
   const handleDeleteClick = (dueno: DuenoDetails) => {
     setDuenoToDelete(dueno)
@@ -64,6 +69,15 @@ export default function DuenosList() {
     }
   }
 
+  const handleAddClick = () => {
+    setIsAddModalOpen(true)
+  }
+
+  const handleEditClick = (dueno: DuenoDetails) => {
+    setDuenoToEdit(dueno)
+    setIsEditModalOpen(true)
+  }
+
   const LoadingSkeleton = () => (
     <>
       {[...Array(5)].map((_, index) => (
@@ -73,26 +87,56 @@ export default function DuenosList() {
           <TableCell><Skeleton className="h-4 w-[150px]" /></TableCell>
           <TableCell><Skeleton className="h-4 w-[120px]" /></TableCell>
           <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
-          <TableCell><Skeleton className="h-4 w-[80px]" /></TableCell>
+          <TableCell><Skeleton className="h-4 w-20" /></TableCell>
           <TableCell><Skeleton className="h-8 w-8" /></TableCell>
         </TableRow>
       ))}
     </>
   )
 
-  if (error) {
+  // No renderizar hasta que esté montado
+  if (!isMounted) {
     return (
-      <div className="text-center py-8">
-        <p className="text-red-500">Error: {error}</p>
-        <Button onClick={getDuenos} className="mt-4">
-          Reintentar
-        </Button>
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-10 w-36" />
+        </div>
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nombre Completo</TableHead>
+                <TableHead>DNI</TableHead>
+                <TableHead>Correo</TableHead>
+                <TableHead>Teléfono</TableHead>
+                <TableHead>Dirección</TableHead>
+                <TableHead>Mascotas</TableHead>
+                <TableHead className="w-[70px]">Acciones</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <LoadingSkeleton />
+            </TableBody>
+          </Table>
+        </div>
       </div>
     )
   }
 
+  // Validar que duenos sea un array válido
+  const validDuenos = Array.isArray(duenos) ? duenos.filter(dueno => dueno && dueno.id) : []
+
   return (
     <>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-2xl font-bold">Lista de Dueños</h2>
+        <Button onClick={handleAddClick}>
+          <Plus className="mr-2 h-4 w-4" />
+          Agregar Dueño
+        </Button>
+      </div>
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -109,42 +153,42 @@ export default function DuenosList() {
           <TableBody>
             {loading ? (
               <LoadingSkeleton />
-            ) : duenos.length === 0 ? (
+            ) : validDuenos.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8">
                   No se encontraron dueños registrados
                 </TableCell>
               </TableRow>
             ) : (
-              duenos.map((dueno) => (
+              validDuenos.map((dueno) => (
                 <TableRow key={dueno.id}>
                   <TableCell className="font-medium">
-                    {dueno.nombre}
+                    {dueno.nombre || 'Sin nombre'}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <IdCard className="h-4 w-4 text-muted-foreground" />
-                      {dueno.DNI}
+                      {dueno.DNI || 'Sin DNI'}
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Mail className="h-4 w-4 text-muted-foreground" />
-                      {dueno.correo}
+                      {dueno.correo || 'Sin correo'}
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Phone className="h-4 w-4 text-muted-foreground" />
-                      {dueno.telefono}
+                      {dueno.telefono || 'Sin teléfono'}
                     </div>
                   </TableCell>
                   <TableCell className="max-w-[200px] truncate">
-                    {dueno.direccion}
+                    {dueno.direccion || 'Sin dirección'}
                   </TableCell>
                   <TableCell>
                     <Badge variant="secondary">
-                      {dueno.cantidadMascota} mascota{dueno.cantidadMascota !== 1 ? 's' : ''}
+                      {dueno.cantidadMascota || 0} mascota{(dueno.cantidadMascota || 0) !== 1 ? 's' : ''}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -158,13 +202,13 @@ export default function DuenosList() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => handleEdit(dueno)}>
-                          <Edit className="mr-2 h-4 w-4" />
-                          Editar
-                        </DropdownMenuItem>
                         <DropdownMenuItem>
                           <Eye className="mr-2 h-4 w-4" />
                           Ver detalles
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleEditClick(dueno)}>
+                          <Edit className="mr-2 h-4 w-4" />
+                          Editar
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem 
@@ -184,12 +228,18 @@ export default function DuenosList() {
         </Table>
       </div>
 
-      {/* Edit Modal */}
-      {selectedDueno && (
+      {/* Add Dueño Modal */}
+      <AddDuenoModal 
+        open={isAddModalOpen}
+        onOpenChange={setIsAddModalOpen}
+      />
+
+      {/* Edit Dueño Modal */}
+      {duenoToEdit && (
         <EditDuenoModal 
           open={isEditModalOpen}
           onOpenChange={setIsEditModalOpen}
-          dueno={selectedDueno}
+          dueno={duenoToEdit}
         />
       )}
 

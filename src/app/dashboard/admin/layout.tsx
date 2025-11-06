@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
@@ -63,6 +63,46 @@ interface AdminLayoutProps {
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  // Asegurar que el componente se monte correctamente en el cliente
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Mostrar skeleton mientras se hidrata
+  if (!mounted) {
+    return (
+      <div className="flex h-screen overflow-hidden">
+        <div className="hidden w-64 flex-col border-r bg-background lg:flex">
+          <div className="flex h-16 items-center border-b px-6">
+            <div className="h-6 w-6 bg-gray-200 rounded animate-pulse" />
+            <div className="ml-2 h-6 w-20 bg-gray-200 rounded animate-pulse" />
+          </div>
+          <div className="flex-1 px-3 py-4">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex items-center rounded-lg px-3 py-2 mb-2">
+                <div className="h-4 w-4 bg-gray-200 rounded animate-pulse mr-3" />
+                <div className="h-4 w-16 bg-gray-200 rounded animate-pulse" />
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="flex flex-1 flex-col overflow-hidden">
+          <header className="flex h-16 items-center border-b bg-background px-4 lg:px-6">
+            <div className="h-6 w-6 bg-gray-200 rounded animate-pulse lg:hidden" />
+            <div className="flex flex-1 items-center justify-between">
+              <div className="h-6 w-48 bg-gray-200 rounded animate-pulse" />
+              <div className="h-8 w-8 bg-gray-200 rounded-full animate-pulse" />
+            </div>
+          </header>
+          <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+            <div className="h-64 w-full bg-gray-200 rounded animate-pulse" />
+          </main>
+        </div>
+      </div>
+    )
+  }
 
   const SidebarContent = () => (
     <div className="flex h-full flex-col">

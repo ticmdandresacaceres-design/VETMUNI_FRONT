@@ -24,7 +24,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { useDuenoContext } from "../context/DuenoContext"
-import { DuenoDetails, DuenoUpdateRequest } from "../types"
+import { DuenoDetails, DuenoUpdateIgnorePasswordAndLocation } from "../types"
 
 const formSchema = z.object({
   nombre: z.string().min(1, "El nombre es requerido"),
@@ -32,9 +32,6 @@ const formSchema = z.object({
   correo: z.string().email("Email inválido"),
   telefono: z.string().min(1, "El teléfono es requerido"),
   direccion: z.string().min(1, "La dirección es requerida"),
-  password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
-  latitud: z.string().optional(),
-  longitud: z.string().optional(),
 })
 
 interface EditDuenoModalProps {
@@ -55,9 +52,6 @@ export default function EditDuenoModal({ open, onOpenChange, dueno }: EditDuenoM
       correo: "",
       telefono: "",
       direccion: "",
-      password: "",
-      latitud: "",
-      longitud: "",
     },
   })
 
@@ -69,9 +63,6 @@ export default function EditDuenoModal({ open, onOpenChange, dueno }: EditDuenoM
         correo: dueno.correo,
         telefono: dueno.telefono,
         direccion: dueno.direccion,
-        password: "", // La contraseña no se muestra por seguridad
-        latitud: "",
-        longitud: "",
       })
     }
   }, [open, dueno, form])
@@ -79,15 +70,12 @@ export default function EditDuenoModal({ open, onOpenChange, dueno }: EditDuenoM
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true)
     try {
-      const payload: DuenoUpdateRequest = {
+      const payload: DuenoUpdateIgnorePasswordAndLocation = {
         nombre: values.nombre,
         DNI: values.DNI,
         correo: values.correo,
         telefono: values.telefono,
         direccion: values.direccion,
-        password: values.password,
-        latitud: values.latitud || "",
-        longitud: values.longitud || "",
       }
 
       const success = await updateDueno(dueno.id, payload)
@@ -173,20 +161,6 @@ export default function EditDuenoModal({ open, onOpenChange, dueno }: EditDuenoM
 
             <FormField
               control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nueva Contraseña</FormLabel>
-                  <FormControl>
-                    <Input placeholder="••••••••" type="password" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
               name="direccion"
               render={({ field }) => (
                 <FormItem>
@@ -201,36 +175,6 @@ export default function EditDuenoModal({ open, onOpenChange, dueno }: EditDuenoM
                 </FormItem>
               )}
             />
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="latitud"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Latitud (Opcional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="-12.0464" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="longitud"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Longitud (Opcional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="-77.0428" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
 
             <DialogFooter>
               <Button 

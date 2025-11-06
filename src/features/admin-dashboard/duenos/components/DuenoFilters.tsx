@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Search, Plus, Filter } from "lucide-react"
+import { Search, Filter } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -13,12 +13,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useDuenoContext } from "../context/DuenoContext"
-import AddDuenoModal from "./AddDuenoModal"
 
 export default function DuenoFilters() {
   const { searchDuenos, getDuenos } = useDuenoContext()
   const [searchTerm, setSearchTerm] = useState("")
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
 
   const handleSearch = async (value: string) => {
     setSearchTerm(value)
@@ -58,17 +56,7 @@ export default function DuenoFilters() {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-
-        <Button onClick={() => setIsAddModalOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Agregar Dueño
-        </Button>
       </div>
-
-      <AddDuenoModal 
-        open={isAddModalOpen} 
-        onOpenChange={setIsAddModalOpen} 
-      />
     </>
   )
 }
