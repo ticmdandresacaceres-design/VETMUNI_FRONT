@@ -44,18 +44,10 @@ export default function MascotasList() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [mascotaToEdit, setMascotaToEdit] = useState<MascotaDetails | null>(null)
-  const [isMounted, setIsMounted] = useState(false)
-
-  // Evitar problemas de hidratación
-  useEffect(() => {
-    setIsMounted(true)
-  }, [])
 
   useEffect(() => {
-    if (isMounted) {
-      getMascotas()
-    }
-  }, [getMascotas, isMounted])
+    getMascotas()
+  }, [getMascotas])
 
   const handleDeleteClick = (mascota: MascotaDetails) => {
     setMascotaToDelete(mascota)
@@ -99,60 +91,26 @@ export default function MascotasList() {
     <>
       {[...Array(5)].map((_, index) => (
         <TableRow key={index}>
-          <TableCell><Skeleton className="h-4 w-[150px]" /></TableCell>
-          <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
-          <TableCell><Skeleton className="h-4 w-[120px]" /></TableCell>
+          <TableCell><Skeleton className="h-4 w-28" /></TableCell>
           <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+          <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+          <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+          <TableCell><Skeleton className="h-4 w-12" /></TableCell>
           <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-          <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
-          <TableCell><Skeleton className="h-4 w-[120px]" /></TableCell>
-          <TableCell><Skeleton className="h-4 w-[180px]" /></TableCell>
+          <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+          <TableCell><Skeleton className="h-4 w-28" /></TableCell>
           <TableCell><Skeleton className="h-8 w-8" /></TableCell>
         </TableRow>
       ))}
     </>
   )
 
-  // No renderizar hasta que esté montado
-  if (!isMounted) {
-    return (
-      <div className="space-y-6">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-10 w-36" />
-        </div>
-        <Skeleton className="h-16 w-full" />
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nombre</TableHead>
-                <TableHead>Identificador</TableHead>
-                <TableHead>Especie</TableHead>
-                <TableHead>Raza</TableHead>
-                <TableHead>Edad</TableHead>
-                <TableHead>Sexo</TableHead>
-                <TableHead>Color</TableHead>
-                <TableHead>Temperamento</TableHead>
-                <TableHead>Dueño</TableHead>
-                <TableHead className="w-[70px]">Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <LoadingSkeleton />
-            </TableBody>
-          </Table>
-        </div>
-      </div>
-    )
-  }
-
   // Validar que mascotas sea un array válido
   const validMascotas = Array.isArray(mascotas) ? mascotas.filter(mascota => mascota && mascota.id) : []
 
   return (
     <div className="space-y-6">
-      {/* Header con título y botón de agregar */}
+      {/* Header con título y botón de agregar - SIEMPRE VISIBLE */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <h2 className="text-2xl font-bold">Lista de Mascotas</h2>
         <Button onClick={handleAddClick}>
@@ -161,12 +119,12 @@ export default function MascotasList() {
         </Button>
       </div>
 
-      {/* Filtros - Separados del contenido */}
+      {/* Filtros - SIEMPRE VISIBLES */}
       <div className="space-y-4">
         <MascotaFilters />
       </div>
 
-      {/* Tabla de mascotas */}
+      {/* Tabla de mascotas - SOLO ESTA PARTE CARGA */}
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -188,7 +146,7 @@ export default function MascotasList() {
               <LoadingSkeleton />
             ) : validMascotas.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center py-8">
+                <TableCell colSpan={10} className="text-center py-8">
                   No se encontraron mascotas registradas
                 </TableCell>
               </TableRow>

@@ -45,8 +45,8 @@ const sidebarNavItems = [
     icon: PawPrint,
   },
   {
-    title: "Reportes",
-    href: "/dashboard/admin/reportes",
+    title: "Vacunas",
+    href: "/dashboard/admin/vacunas",
     icon: FileText,
   },
   {

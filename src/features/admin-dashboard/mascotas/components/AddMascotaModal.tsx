@@ -25,8 +25,8 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { useMascotaContext } from "../context/MascotaContext"
-import { useDuenoContext } from "../../duenos/context/DuenoContext"
 import { MascotaNewRequest } from "../types"
+import SelectDueno from "./SelectDueno"
 
 const formSchema = z.object({
   nombre: z.string().min(1, "El nombre es requerido"),
@@ -47,7 +47,6 @@ interface AddMascotaModalProps {
 
 export default function AddMascotaModal({ open, onOpenChange }: AddMascotaModalProps) {
   const { createMascota, loading } = useMascotaContext()
-  const { duenos, getDuenos } = useDuenoContext()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -64,18 +63,6 @@ export default function AddMascotaModal({ open, onOpenChange }: AddMascotaModalP
       duenoId: "",
     },
   })
-
-  const loadDuenos = useCallback(() => {
-    if (duenos.length === 0) {
-      getDuenos()
-    }
-  }, [duenos.length, getDuenos])
-
-  useEffect(() => {
-    if (open) {
-      loadDuenos()
-    }
-  }, [open, loadDuenos])
 
   useEffect(() => {
     if (!open) {
@@ -292,20 +279,14 @@ export default function AddMascotaModal({ open, onOpenChange }: AddMascotaModalP
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Propietario</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecciona propietario" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {duenos.map((dueno) => (
-                          <SelectItem key={dueno.id} value={dueno.id}>
-                            {dueno.nombre} - {dueno.DNI}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <SelectDueno
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        placeholder="Buscar propietario por nombre o DNI"
+                        disabled={isSubmitting}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -324,6 +305,7 @@ export default function AddMascotaModal({ open, onOpenChange }: AddMascotaModalP
             Cancelar
           </Button>
           <Button 
+          className="mx-1"
             type="button" 
             disabled={isSubmitting || loading}
             onClick={form.handleSubmit(handleSubmit)}
