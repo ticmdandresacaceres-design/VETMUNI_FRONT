@@ -1,10 +1,6 @@
-function VacunasPage() {
-    return ( 
-        <div>
-            <h1>Vacunas Management</h1>
-            {/* Additional components and logic for managing vacunas would go here */}
-        </div>
-     );
+import VacunasClient from "@/src/features/admin-dashboard/vacunas/components/VacunasClient";
+
+export default function VacunasPage() {
+    return <VacunasClient/>
 }
 
-export default VacunasPage;

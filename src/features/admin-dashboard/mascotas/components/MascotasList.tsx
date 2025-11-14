@@ -135,7 +135,6 @@ export default function MascotasList() {
               <TableHead>Raza</TableHead>
               <TableHead>Edad</TableHead>
               <TableHead>Sexo</TableHead>
-              <TableHead>Color</TableHead>
               <TableHead>Temperamento</TableHead>
               <TableHead>Dueño</TableHead>
               <TableHead className="w-[70px]">Acciones</TableHead>
@@ -177,12 +176,6 @@ export default function MascotasList() {
                     <div className="flex items-center gap-1">
                       <span>{getSexoIcon(mascota.sexo)}</span>
                       {mascota.sexo || 'Sin especificar'}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Palette className="h-4 w-4 text-muted-foreground" />
-                      {mascota.color || 'Sin color'}
                     </div>
                   </TableCell>
                   <TableCell>

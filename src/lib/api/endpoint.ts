@@ -1,3 +1,5 @@
+import { filter } from "@/src/features/admin-dashboard/mascotas/services/MascotaService";
+
 export const ENDPOINTS = {
   // =====================
   // Auth (general)
@@ -34,9 +36,15 @@ export const ENDPOINTS = {
       delete: (id: string) => `/admin/mascota/${id}`,
       search: '/admin/mascota/search',
       filter: '/admin/mascota/filter',
-      vacunas: (id: string) => `/admin/mascota/${id}/vacunas`,
-      historial: (id: string) => `/admin/mascota/${id}/historial`,
     },
+    vacunas: {
+      list: '/admin/vacuna',
+      create: '/admin/vacuna',
+      getById: (id: string) => `/admin/vacuna/${id}`,
+      delete: (id: string) => `/admin/vacuna/${id}`,
+      filter: '/admin/vacuna/filter',
+      findByDateRange: '/admin/vacuna/date-range',
+    }
   },
 
   // =====================

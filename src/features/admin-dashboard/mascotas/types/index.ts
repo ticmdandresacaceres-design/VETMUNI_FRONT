@@ -4,12 +4,13 @@ export type MascotaNewRequest = {
     nombre: string;
     especie: string;
     raza: string;
-    edad: string;
     sexo: string;
     temperamento: string;
     condicionReproductiva: string;
     color: string;
     duenoId: string;
+    anios: number;
+    meses: number;
 }
 
 export type MascotaDetails = {
@@ -17,7 +18,7 @@ export type MascotaDetails = {
     nombre: string;
     especie: string;
     raza: string;
-    edad: string;
+    edad: number;
     sexo: string;
     temperamento: string;
     condicionreproductiva: string;
@@ -30,11 +31,12 @@ export type MascotaUpdateRequest = {
     nombre: string;
     especie: string;
     raza: string;
-    edad: string;
     sexo: string;
     temperamento: string;
     condicionReproductiva: string;
     color: string;
+    anios: number;
+    meses: number;
 };
 
 // Tipos de respuesta específicos para Mascota
