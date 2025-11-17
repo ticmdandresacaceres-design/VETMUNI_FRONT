@@ -40,18 +40,23 @@ function SelectMascota({
   const { mascotas, getMascotaById, searchMascotas, loading } = useMascotaContext()
   const [selectedMascota, setSelectedMascota] = useState<MascotaDetails | null>(null)
 
-  // Solo cargar la mascota seleccionada cuando hay un value
+  // CORREGIDO: Cargar la mascota seleccionada cuando value cambie
   useEffect(() => {
-    if (value && !selectedMascota) {
-      getMascotaById(value).then((mascota) => {
-        if (mascota) {
-          setSelectedMascota(mascota)
-        }
-      })
-    } else if (!value) {
+    if (value) {
+      // Si el value cambió o no tenemos la mascota cargada, cargarla
+      if (!selectedMascota || selectedMascota.id !== value) {
+        getMascotaById(value).then((mascota) => {
+          if (mascota) {
+            setSelectedMascota(mascota)
+          } else {
+            setSelectedMascota(null)
+          }
+        })
+      }
+    } else {
       setSelectedMascota(null)
     }
-  }, [value, selectedMascota, getMascotaById])
+  }, [value, getMascotaById]) // Removido selectedMascota de las dependencias
 
   // Buscar mascotas solo cuando el usuario escribe
   useEffect(() => {

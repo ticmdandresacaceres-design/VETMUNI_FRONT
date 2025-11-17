@@ -40,18 +40,23 @@ function SelectDueno({
   const { duenos, getDuenoById, searchDuenos, loading } = useDuenoContext()
   const [selectedDueno, setSelectedDueno] = useState<DuenoDetails | null>(null)
 
-  // Solo cargar el dueño seleccionado cuando hay un value
+  // CORREGIDO: Cargar el dueño seleccionado cuando value cambie
   useEffect(() => {
-    if (value && !selectedDueno) {
-      getDuenoById(value).then((dueno) => {
-        if (dueno) {
-          setSelectedDueno(dueno)
-        }
-      })
-    } else if (!value) {
+    if (value) {
+      // Si el value cambió o no tenemos el dueño cargado, cargarlo
+      if (!selectedDueno || selectedDueno.id !== value) {
+        getDuenoById(value).then((dueno) => {
+          if (dueno) {
+            setSelectedDueno(dueno)
+          } else {
+            setSelectedDueno(null)
+          }
+        })
+      }
+    } else {
       setSelectedDueno(null)
     }
-  }, [value, selectedDueno, getDuenoById])
+  }, [value, getDuenoById]) // Removido selectedDueno de las dependencias
 
   // Buscar dueños solo cuando el usuario escribe
   useEffect(() => {

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Filter, X, Calendar as CalendarIcon, Syringe } from "lucide-react"
+import { Filter, X, Calendar as CalendarIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
@@ -62,11 +62,6 @@ export default function VacunaFilters() {
     <div className="space-y-3">
       {/* Header con botón de filtros */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Syringe className="h-4 w-4" />
-          <span>Filtros de Vacunas</span>
-        </div>
-        
         <Button
           variant="outline"
           size="sm"

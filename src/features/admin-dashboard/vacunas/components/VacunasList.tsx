@@ -124,7 +124,6 @@ export default function VacunasList() {
       {/* Header con título y botón de agregar */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div className="flex items-center gap-2">
-          <Syringe className="h-6 w-6" />
           <h2 className="text-2xl font-bold">Registro de Vacunas</h2>
         </div>
         <Button onClick={handleAddClick}>

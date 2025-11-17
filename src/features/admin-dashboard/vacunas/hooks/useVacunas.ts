@@ -14,6 +14,7 @@ interface UseVacunasReturn {
     filterVacunasByType: (type: string) => Promise<void>;
     filterVacunasByDateRange: (startDate: string, endDate: string) => Promise<void>;
     clearError: () => void;
+    getMascotaNames: () => string[];
 }
 
 function getErrorMessage(error: unknown): string {
@@ -33,6 +34,12 @@ const useVacunas = (): UseVacunasReturn => {
     const clearError = useCallback(() => {
         setError(null);
     }, []);
+
+    // función para obtener nombres de mascotas únicas
+    const getMascotaNames = useCallback((): string[] => {
+        const mascotasUnicas = Array.from(new Set(vacunas.map(vacuna => vacuna.mascota)));
+        return mascotasUnicas.filter(nombre => nombre && nombre.trim() !== '');
+    }, [vacunas]);
 
     // Obtener todas las vacunas
     const getVacunas = useCallback(async (): Promise<void> => {
@@ -148,6 +155,7 @@ const useVacunas = (): UseVacunasReturn => {
         filterVacunasByType,
         filterVacunasByDateRange,
         clearError,
+        getMascotaNames,
     };
 };
 

@@ -24,7 +24,10 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
+import { ConfirmDialog } from "@/src/components/ConfirmDialog"
+import { useConfirmDialog } from "@/src/hooks/useConfirmDialog"
 import { useMascotaContext } from "../context/MascotaContext"
+import { useDuenoContext } from "../../duenos/context/DuenoContext"
 import { MascotaNewRequest } from "../types"
 import SelectDueno from "./SelectDueno"
 
@@ -49,8 +52,10 @@ interface AddMascotaModalProps {
 
 export default function AddMascotaModal({ open, onOpenChange }: AddMascotaModalProps) {
   const { createMascota, loading } = useMascotaContext()
+  const { getDuenoById } = useDuenoContext()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [especieSeleccionada, setEspecieSeleccionada] = useState("")
+  const { isOpen, options, showConfirmDialog, hideConfirmDialog, handleConfirm } = useConfirmDialog()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -75,6 +80,47 @@ export default function AddMascotaModal({ open, onOpenChange }: AddMascotaModalP
       setEspecieSeleccionada("")
     }
   }, [open, form])
+
+  // Función para obtener el nombre del dueño
+  const getDuenoNombre = useCallback(async () => {
+    const duenoId = form.getValues("duenoId")
+    if (!duenoId) return "el propietario seleccionado"
+    
+    try {
+      const dueno = await getDuenoById(duenoId)
+      return dueno ? dueno.nombre : "el propietario seleccionado"
+    } catch (error) {
+      console.error("Error al obtener dueño:", error)
+      return "el propietario seleccionado"
+    }
+  }, [form, getDuenoById])
+
+  // Función para mostrar el modal de confirmación
+  const handleSubmitWithConfirmation = useCallback(async () => {
+    const isValid = await form.trigger()
+    if (!isValid) return
+
+    const values = form.getValues()
+    const especieCompleta = values.especie === "Otro" ? values.especieOtra : values.especie
+    const duenoNombre = await getDuenoNombre()
+    
+    // Construir edad para mostrar
+    const edad = values.anios > 0 || values.meses > 0 
+      ? `${values.anios} año${values.anios !== 1 ? 's' : ''} y ${values.meses} mes${values.meses !== 1 ? 'es' : ''}`
+      : "menos de 1 mes"
+
+    showConfirmDialog(
+      {
+        title: "Confirmar registro",
+        message: `¿Estás seguro de registrar a "${values.nombre}"?\n\nEspecie: ${especieCompleta}\nEdad: ${edad}\nPropietario: ${duenoNombre}`,
+        buttons: {
+          cancel: "Revisar",
+          confirm: "Sí, registrar"
+        }
+      },
+      handleSubmit
+    )
+  }, [form, showConfirmDialog, getDuenoNombre])
 
   const handleSubmit = useCallback(async () => {
     const values = form.getValues()
@@ -105,116 +151,28 @@ export default function AddMascotaModal({ open, onOpenChange }: AddMascotaModalP
   }, [createMascota, form, onOpenChange])
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Agregar Nueva Mascota</DialogTitle>
-          <DialogDescription>
-            Completa la información de la mascota y asigna su propietario.
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Agregar Nueva Mascota</DialogTitle>
+            <DialogDescription>
+              Completa la información de la mascota y asigna su propietario.
+            </DialogDescription>
+          </DialogHeader>
 
-        <Form {...form}>
-          <div className="space-y-4">
-            {/* Información General - 2 columnas */}
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="nombre"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nombre</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Max, Luna..." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="especie"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Especie</FormLabel>
-                    <Select 
-                      onValueChange={(value) => {
-                        field.onChange(value)
-                        setEspecieSeleccionada(value)
-                        if (value !== "Otro") {
-                          form.setValue("especieOtra", "")
-                        }
-                      }} 
-                      value={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecciona especie" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Perro">Perro</SelectItem>
-                        <SelectItem value="Gato">Gato</SelectItem>
-                        <SelectItem value="Ave">Ave</SelectItem>
-                        <SelectItem value="Conejo">Conejo</SelectItem>
-                        <SelectItem value="Hamster">Hamster</SelectItem>
-                        <SelectItem value="Otro">Otro</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Input para especie "Otro" */}
-              {especieSeleccionada === "Otro" && (
+          <Form {...form}>
+            <div className="space-y-4">
+              {/* Información General - 2 columnas */}
+              <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="especieOtra"
-                  render={({ field }) => (
-                    <FormItem className="col-span-2">
-                      <FormLabel>Especifica la especie</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Escribe la especie..." {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
-
-              <FormField
-                control={form.control}
-                name="raza"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Raza</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Labrador..." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Edad dividida en años y meses */}
-              <div className="grid grid-cols-2 gap-2">
-                <FormField
-                  control={form.control}
-                  name="anios"
+                  name="nombre"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Años</FormLabel>
+                      <FormLabel>Nombre</FormLabel>
                       <FormControl>
-                        <Input 
-                          type="number" 
-                          min="0" 
-                          max="50" 
-                          placeholder="0"
-                          {...field}
-                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                        />
+                        <Input placeholder="Max, Luna..." {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -223,18 +181,222 @@ export default function AddMascotaModal({ open, onOpenChange }: AddMascotaModalP
 
                 <FormField
                   control={form.control}
-                  name="meses"
+                  name="especie"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Meses</FormLabel>
+                      <FormLabel>Especie</FormLabel>
+                      <Select 
+                        onValueChange={(value) => {
+                          field.onChange(value)
+                          setEspecieSeleccionada(value)
+                          if (value !== "Otro") {
+                            form.setValue("especieOtra", "")
+                          }
+                        }} 
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecciona especie" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Perro">Perro</SelectItem>
+                          <SelectItem value="Gato">Gato</SelectItem>
+                          <SelectItem value="Ave">Ave</SelectItem>
+                          <SelectItem value="Conejo">Conejo</SelectItem>
+                          <SelectItem value="Hamster">Hamster</SelectItem>
+                          <SelectItem value="Otro">Otro</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Input para especie "Otro" */}
+                {especieSeleccionada === "Otro" && (
+                  <FormField
+                    control={form.control}
+                    name="especieOtra"
+                    render={({ field }) => (
+                      <FormItem className="col-span-2">
+                        <FormLabel>Especifica la especie</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Escribe la especie..." {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+
+                <FormField
+                  control={form.control}
+                  name="raza"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Raza</FormLabel>
                       <FormControl>
-                        <Input 
-                          type="number" 
-                          min="0" 
-                          max="11" 
-                          placeholder="0"
-                          {...field}
-                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                        <Input placeholder="Labrador..." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Edad dividida en años y meses */}
+                <div className="grid grid-cols-2 gap-2">
+                  <FormField
+                    control={form.control}
+                    name="anios"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Años</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            min="0" 
+                            max="50" 
+                            placeholder="0"
+                            {...field}
+                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="meses"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Meses</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            min="0" 
+                            max="11" 
+                            placeholder="0"
+                            {...field}
+                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+
+              <Separator className="my-4" />
+
+              {/* Características Físicas - 3 columnas */}
+              <div className="grid grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
+                  name="sexo"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Sexo</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Sexo" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Macho">Macho</SelectItem>
+                          <SelectItem value="Hembra">Hembra</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="color"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Color</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Negro, Blanco..." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="temperamento"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Temperamento</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Temperamento" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Dócil">Dócil</SelectItem>
+                          <SelectItem value="Agresivo">Agresivo</SelectItem>
+                          <SelectItem value="Juguetón">Juguetón</SelectItem>
+                          <SelectItem value="Tímido">Tímido</SelectItem>
+                          <SelectItem value="Protector">Protector</SelectItem>
+                          <SelectItem value="Calmado">Calmado</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <Separator className="my-4" />
+
+              {/* Información Adicional - Full width */}
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="condicionReproductiva"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Condición Reproductiva</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecciona condición" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Entero">Entero</SelectItem>
+                          <SelectItem value="Castrado">Castrado</SelectItem>
+                          <SelectItem value="Esterilizado">Esterilizado</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="duenoId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Propietario</FormLabel>
+                      <FormControl>
+                        <SelectDueno
+                          value={field.value}
+                          onValueChange={field.onChange}
+                          placeholder="Buscar propietario por nombre o DNI"
+                          disabled={isSubmitting}
                         />
                       </FormControl>
                       <FormMessage />
@@ -243,142 +405,41 @@ export default function AddMascotaModal({ open, onOpenChange }: AddMascotaModalP
                 />
               </div>
             </div>
+          </Form>
 
-            <Separator className="my-4" />
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => onOpenChange(false)}
+              disabled={isSubmitting}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              className="mx-1"
+              type="button" 
+              disabled={isSubmitting || loading}
+              onClick={handleSubmitWithConfirmation}
+            >
+              {isSubmitting ? "Guardando..." : "Crear Mascota"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-            {/* Características Físicas - 3 columnas */}
-            <div className="grid grid-cols-3 gap-4">
-              <FormField
-                control={form.control}
-                name="sexo"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Sexo</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Sexo" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Macho">Macho</SelectItem>
-                        <SelectItem value="Hembra">Hembra</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="color"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Color</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Negro, Blanco..." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="temperamento"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Temperamento</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Temperamento" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Dócil">Dócil</SelectItem>
-                        <SelectItem value="Agresivo">Agresivo</SelectItem>
-                        <SelectItem value="Juguetón">Juguetón</SelectItem>
-                        <SelectItem value="Tímido">Tímido</SelectItem>
-                        <SelectItem value="Protector">Protector</SelectItem>
-                        <SelectItem value="Calmado">Calmado</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <Separator className="my-4" />
-
-            {/* Información Adicional - Full width */}
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="condicionReproductiva"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Condición Reproductiva</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecciona condición" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Entero">Entero</SelectItem>
-                        <SelectItem value="Castrado">Castrado</SelectItem>
-                        <SelectItem value="Esterilizado">Esterilizado</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="duenoId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Propietario</FormLabel>
-                    <FormControl>
-                      <SelectDueno
-                        value={field.value}
-                        onValueChange={field.onChange}
-                        placeholder="Buscar propietario por nombre o DNI"
-                        disabled={isSubmitting}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
-        </Form>
-
-        <DialogFooter className="gap-2 sm:gap-0">
-          <Button 
-            type="button" 
-            variant="outline" 
-            onClick={() => onOpenChange(false)}
-            disabled={isSubmitting}
-          >
-            Cancelar
-          </Button>
-          <Button 
-            className="mx-1"
-            type="button" 
-            disabled={isSubmitting || loading}
-            onClick={form.handleSubmit(handleSubmit)}
-          >
-            {isSubmitting ? "Guardando..." : "Crear Mascota"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      {/* Modal de Confirmación */}
+      {options && (
+        <ConfirmDialog
+          open={isOpen}
+          onOpenChange={hideConfirmDialog}
+          title={options.title}
+          message={options.message}
+          buttons={options.buttons}
+          onConfirm={handleConfirm}
+          loading={isSubmitting}
+        />
+      )}
+    </>
   )
 }

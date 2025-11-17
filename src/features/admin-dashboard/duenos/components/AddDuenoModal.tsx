@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -25,6 +25,8 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ConfirmDialog } from "@/src/components/ConfirmDialog"
+import { useConfirmDialog } from "@/src/hooks/useConfirmDialog"
 import SelectorMap from "./SelectorMap"
 import { useDuenoContext } from "../context/DuenoContext"
 import { DuenoNewRequest } from "../types"
@@ -49,6 +51,7 @@ interface AddDuenoModalProps {
 export default function AddDuenoModal({ open, onOpenChange }: AddDuenoModalProps) {
   const { createDueno, loading } = useDuenoContext()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const { isOpen, options, showConfirmDialog, hideConfirmDialog, handleConfirm } = useConfirmDialog()
 
   // Configuración del formulario con React Hook Form y Zod
   const form = useForm<z.infer<typeof formSchema>>({
@@ -70,7 +73,28 @@ export default function AddDuenoModal({ open, onOpenChange }: AddDuenoModalProps
     form.setValue('longitud', position.lng.toString())
   }
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  // Función para mostrar el modal de confirmación
+  const handleSubmitWithConfirmation = useCallback(async () => {
+    const isValid = await form.trigger()
+    if (!isValid) return
+
+    const values = form.getValues()
+
+    showConfirmDialog(
+      {
+        title: "Confirmar registro",
+        message: `¿Estás seguro de crear el propietario "${values.nombre}" con DNI ${values.DNI}?\n\nEsta acción creará una nueva cuenta de usuario.`,
+        buttons: {
+          cancel: "Revisar",
+          confirm: "Sí, crear"
+        }
+      },
+      handleSubmit
+    )
+  }, [form, showConfirmDialog])
+
+  const handleSubmit = useCallback(async () => {
+    const values = form.getValues()
     setIsSubmitting(true)
     try {
       const payload: DuenoNewRequest = {
@@ -92,48 +116,215 @@ export default function AddDuenoModal({ open, onOpenChange }: AddDuenoModalProps
     } finally {
       setIsSubmitting(false)
     }
-  }
+  }, [createDueno, form, onOpenChange])
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent 
-        className="max-w-none w-[95vw] h-[95vh] flex flex-col overflow-hidden p-0"
-        style={{ 
-          width: '95vw', 
-          maxWidth: '1600px', 
-          height: '95vh',
-          minHeight: '600px'
-        }}
-      >
-        {/* Header fijo */}
-        <DialogHeader className="shrink-0 p-6 pb-4 border-b">
-          <DialogTitle className="text-xl font-semibold">Agregar Nuevo Dueño</DialogTitle>
-          <DialogDescription className="text-gray-600">
-            Completa toda la información del propietario de la mascota incluyendo su ubicación.
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent 
+          className="max-w-none w-[95vw] h-[95vh] flex flex-col overflow-hidden p-0"
+          style={{ 
+            width: '95vw', 
+            maxWidth: '1600px', 
+            height: '95vh',
+            minHeight: '600px'
+          }}
+        >
+          {/* Header fijo */}
+          <DialogHeader className="shrink-0 p-6 pb-4 border-b">
+            <DialogTitle className="text-xl font-semibold">Agregar Nuevo Dueño</DialogTitle>
+            <DialogDescription className="text-gray-600">
+              Completa toda la información del propietario de la mascota incluyendo su ubicación.
+            </DialogDescription>
+          </DialogHeader>
 
-        {/* Contenido con scroll */}
-        <div className="flex-1 overflow-y-auto p-6">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="h-full">
-              {/* Layout para pantallas grandes */}
-              <div className="hidden xl:block h-full min-h-[500px]">
-                <div className="grid grid-cols-5 gap-6 h-full">
-                  {/* Columna izquierda - Información Personal (2 columnas) */}
-                  <div className="col-span-2 space-y-4">
-                    <div>
-                      <h3 className="text-lg font-medium text-gray-600 mb-3">Información Personal</h3>
-                      <div className="space-y-3">
-                        <div className="grid grid-cols-2 gap-3">
+          {/* Contenido con scroll */}
+          <div className="flex-1 overflow-y-auto p-6">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleSubmitWithConfirmation)} className="h-full">
+                {/* Layout para pantallas grandes */}
+                <div className="hidden xl:block h-full min-h-[500px]">
+                  <div className="grid grid-cols-5 gap-6 h-full">
+                    {/* Columna izquierda - Información Personal (2 columnas) */}
+                    <div className="col-span-2 space-y-4">
+                      <div>
+                        <h3 className="text-lg font-medium text-gray-600 mb-3">Información Personal</h3>
+                        <div className="space-y-3">
+                          <div className="grid grid-cols-2 gap-3">
+                            <FormField
+                              control={form.control}
+                              name="nombre"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel className="text-sm">Nombre Completo</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="Juan Pérez" className="h-9" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={form.control}
+                              name="DNI"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel className="text-sm">DNI</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="12345678" className="h-9" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-3">
+                            <FormField
+                              control={form.control}
+                              name="correo"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel className="text-sm">Correo Electrónico</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="juan@example.com" type="email" className="h-9" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={form.control}
+                              name="telefono"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel className="text-sm">Teléfono</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="+51 987 654 321" className="h-9" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+
+                          <FormField
+                            control={form.control}
+                            name="password"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-sm">Contraseña</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="••••••••" type="password" className="h-9" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="direccion"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-sm">Dirección</FormLabel>
+                                <FormControl>
+                                  <Textarea 
+                                    placeholder="Av. Ejemplo 123, Distrito, Ciudad..."
+                                    className="min-h-[60px] max-h-[60px] resize-none text-sm"
+                                    {...field} 
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <Separator className="my-2" />
+
+                          {/* Coordenadas */}
+                          <div>
+                            <h4 className="text-md font-medium text-gray-600 mb-2">Coordenadas</h4>
+                            <div className="grid grid-cols-2 gap-3">
+                              <FormField
+                                control={form.control}
+                                name="latitud"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel className="text-sm">Latitud</FormLabel>
+                                    <FormControl>
+                                      <Input 
+                                        placeholder="-13.162479" 
+                                        {...field} 
+                                        readOnly 
+                                        className="h-9 text-sm"
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+
+                              <FormField
+                                control={form.control}
+                                name="longitud"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel className="text-sm">Longitud</FormLabel>
+                                    <FormControl>
+                                      <Input 
+                                        placeholder="-74.213383" 
+                                        {...field} 
+                                        readOnly 
+                                        className="h-9 text-sm"
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Columna derecha - Mapa (3 columnas) */}
+                    <div className="col-span-3">
+                      <div className="h-full">
+                        <h3 className="text-lg font-medium text-gray-600 mb-3">Ubicación en el Mapa</h3>
+                        <div className="border border-gray-200 rounded-lg p-3 bg-gray-50 h-[calc(100%-2rem)]">
+                          <SelectorMap
+                            onPositionChange={handleMapPositionChange}
+                            height="100%"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Layout para pantallas medianas y pequeñas usando Tabs */}
+                <div className="block xl:hidden h-full min-h-[500px]">
+                  <Tabs defaultValue="info" className="h-full flex flex-col">
+                    <TabsList className="grid w-full grid-cols-2 mb-4">
+                      <TabsTrigger value="info">Información Personal</TabsTrigger>
+                      <TabsTrigger value="location">Ubicación</TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="info" className="flex-1 space-y-4 mt-0">
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <FormField
                             control={form.control}
                             name="nombre"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel className="text-sm">Nombre Completo</FormLabel>
+                                <FormLabel>Nombre Completo</FormLabel>
                                 <FormControl>
-                                  <Input placeholder="Juan Pérez" className="h-9" {...field} />
+                                  <Input placeholder="Juan Pérez" {...field} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -145,9 +336,9 @@ export default function AddDuenoModal({ open, onOpenChange }: AddDuenoModalProps
                             name="DNI"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel className="text-sm">DNI</FormLabel>
+                                <FormLabel>DNI</FormLabel>
                                 <FormControl>
-                                  <Input placeholder="12345678" className="h-9" {...field} />
+                                  <Input placeholder="12345678" {...field} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -155,15 +346,15 @@ export default function AddDuenoModal({ open, onOpenChange }: AddDuenoModalProps
                           />
                         </div>
 
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <FormField
                             control={form.control}
                             name="correo"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel className="text-sm">Correo Electrónico</FormLabel>
+                                <FormLabel>Correo Electrónico</FormLabel>
                                 <FormControl>
-                                  <Input placeholder="juan@example.com" type="email" className="h-9" {...field} />
+                                  <Input placeholder="juan@example.com" type="email" {...field} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -175,9 +366,9 @@ export default function AddDuenoModal({ open, onOpenChange }: AddDuenoModalProps
                             name="telefono"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel className="text-sm">Teléfono</FormLabel>
+                                <FormLabel>Teléfono</FormLabel>
                                 <FormControl>
-                                  <Input placeholder="+51 987 654 321" className="h-9" {...field} />
+                                  <Input placeholder="+51 987 654 321" {...field} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -190,9 +381,9 @@ export default function AddDuenoModal({ open, onOpenChange }: AddDuenoModalProps
                           name="password"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="text-sm">Contraseña</FormLabel>
+                              <FormLabel>Contraseña</FormLabel>
                               <FormControl>
-                                <Input placeholder="••••••••" type="password" className="h-9" {...field} />
+                                <Input placeholder="••••••••" type="password" {...field} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -204,11 +395,11 @@ export default function AddDuenoModal({ open, onOpenChange }: AddDuenoModalProps
                           name="direccion"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="text-sm">Dirección</FormLabel>
+                              <FormLabel>Dirección</FormLabel>
                               <FormControl>
                                 <Textarea 
                                   placeholder="Av. Ejemplo 123, Distrito, Ciudad..."
-                                  className="min-h-[60px] max-h-[60px] resize-none text-sm"
+                                  className="min-h-20 resize-none"
                                   {...field} 
                                 />
                               </FormControl>
@@ -217,24 +408,24 @@ export default function AddDuenoModal({ open, onOpenChange }: AddDuenoModalProps
                           )}
                         />
 
-                        <Separator className="my-2" />
+                        <Separator />
 
-                        {/* Coordenadas */}
+                        {/* Coordenadas en móvil */}
                         <div>
-                          <h4 className="text-md font-medium text-gray-600 mb-2">Coordenadas</h4>
-                          <div className="grid grid-cols-2 gap-3">
+                          <h4 className="text-lg font-medium text-gray-900 mb-3">Coordenadas</h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <FormField
                               control={form.control}
                               name="latitud"
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel className="text-sm">Latitud</FormLabel>
+                                  <FormLabel>Latitud</FormLabel>
                                   <FormControl>
                                     <Input 
                                       placeholder="-13.162479" 
                                       {...field} 
                                       readOnly 
-                                      className="h-9 text-sm"
+                                      className="bg-gray-50"
                                     />
                                   </FormControl>
                                   <FormMessage />
@@ -247,13 +438,13 @@ export default function AddDuenoModal({ open, onOpenChange }: AddDuenoModalProps
                               name="longitud"
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel className="text-sm">Longitud</FormLabel>
+                                  <FormLabel>Longitud</FormLabel>
                                   <FormControl>
                                     <Input 
                                       placeholder="-74.213383" 
                                       {...field} 
                                       readOnly 
-                                      className="h-9 text-sm"
+                                      className="bg-gray-50"
                                     />
                                   </FormControl>
                                   <FormMessage />
@@ -263,213 +454,61 @@ export default function AddDuenoModal({ open, onOpenChange }: AddDuenoModalProps
                           </div>
                         </div>
                       </div>
-                    </div>
-                  </div>
+                    </TabsContent>
 
-                  {/* Columna derecha - Mapa (3 columnas) */}
-                  <div className="col-span-3">
-                    <div className="h-full">
-                      <h3 className="text-lg font-medium text-gray-600 mb-3">Ubicación en el Mapa</h3>
-                      <div className="border border-gray-200 rounded-lg p-3 bg-gray-50 h-[calc(100%-2rem)]">
-                        <SelectorMap
-                          onPositionChange={handleMapPositionChange}
-                          height="100%"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Layout para pantallas medianas y pequeñas usando Tabs */}
-              <div className="block xl:hidden h-full min-h-[500px]">
-                <Tabs defaultValue="info" className="h-full flex flex-col">
-                  <TabsList className="grid w-full grid-cols-2 mb-4">
-                    <TabsTrigger value="info">Información Personal</TabsTrigger>
-                    <TabsTrigger value="location">Ubicación</TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="info" className="flex-1 space-y-4 mt-0">
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <FormField
-                          control={form.control}
-                          name="nombre"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Nombre Completo</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Juan Pérez" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="DNI"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>DNI</FormLabel>
-                              <FormControl>
-                                <Input placeholder="12345678" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <FormField
-                          control={form.control}
-                          name="correo"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Correo Electrónico</FormLabel>
-                              <FormControl>
-                                <Input placeholder="juan@example.com" type="email" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="telefono"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Teléfono</FormLabel>
-                              <FormControl>
-                                <Input placeholder="+51 987 654 321" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-
-                      <FormField
-                        control={form.control}
-                        name="password"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Contraseña</FormLabel>
-                            <FormControl>
-                              <Input placeholder="••••••••" type="password" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="direccion"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Dirección</FormLabel>
-                            <FormControl>
-                              <Textarea 
-                                placeholder="Av. Ejemplo 123, Distrito, Ciudad..."
-                                className="min-h-20 resize-none"
-                                {...field} 
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <Separator />
-
-                      {/* Coordenadas en móvil */}
-                      <div>
-                        <h4 className="text-lg font-medium text-gray-900 mb-3">Coordenadas</h4>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <FormField
-                            control={form.control}
-                            name="latitud"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Latitud</FormLabel>
-                                <FormControl>
-                                  <Input 
-                                    placeholder="-13.162479" 
-                                    {...field} 
-                                    readOnly 
-                                    className="bg-gray-50"
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-
-                          <FormField
-                            control={form.control}
-                            name="longitud"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Longitud</FormLabel>
-                                <FormControl>
-                                  <Input 
-                                    placeholder="-74.213383" 
-                                    {...field} 
-                                    readOnly 
-                                    className="bg-gray-50"
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
+                    <TabsContent value="location" className="flex-1 mt-0">
+                      <div className="h-full min-h-[400px]">
+                        <div className="border border-gray-200 rounded-lg p-4 bg-gray-50 h-full">
+                          <SelectorMap
+                            onPositionChange={handleMapPositionChange}
+                            height="100%"
                           />
                         </div>
                       </div>
-                    </div>
-                  </TabsContent>
-
-                  <TabsContent value="location" className="flex-1 mt-0">
-                    <div className="h-full min-h-[400px]">
-                      <div className="border border-gray-200 rounded-lg p-4 bg-gray-50 h-full">
-                        <SelectorMap
-                          onPositionChange={handleMapPositionChange}
-                          height="100%"
-                        />
-                      </div>
-                    </div>
-                  </TabsContent>
-                </Tabs>
-              </div>
-            </form>
-          </Form>
-        </div>
-
-        {/* Footer fijo con botones */}
-        <DialogFooter className="shrink-0 p-6 pt-4 border-t ">
-          <div className="flex flex-col sm:flex-row justify-end gap-3 w-full">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => onOpenChange(false)}
-              disabled={isSubmitting}
-              className="px-6 h-10 w-full sm:w-auto"
-            >
-              Cancelar
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={isSubmitting || loading}
-              className="px-6 h-10 w-full sm:w-auto"
-              onClick={form.handleSubmit(onSubmit)}
-            >
-              {isSubmitting ? "Guardando..." : "Crear Dueño"}
-            </Button>
+                    </TabsContent>
+                  </Tabs>
+                </div>
+              </form>
+            </Form>
           </div>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+
+          {/* Footer fijo con botones */}
+          <DialogFooter className="shrink-0 p-6 pt-4 border-t ">
+            <div className="flex flex-col sm:flex-row justify-end gap-3 w-full">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => onOpenChange(false)}
+                disabled={isSubmitting}
+                className="px-6 h-10 w-full sm:w-auto"
+              >
+                Cancelar
+              </Button>
+              <Button 
+                type="button" 
+                disabled={isSubmitting || loading}
+                className="px-6 h-10 w-full sm:w-auto"
+                onClick={handleSubmitWithConfirmation}
+              >
+                {isSubmitting ? "Guardando..." : "Crear Dueño"}
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Confirmación */}
+      {options && (
+        <ConfirmDialog
+          open={isOpen}
+          onOpenChange={hideConfirmDialog}
+          title={options.title}
+          message={options.message}
+          buttons={options.buttons}
+          onConfirm={handleConfirm}
+          loading={isSubmitting}
+        />
+      )}
+    </>
   )
 }

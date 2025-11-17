@@ -30,11 +30,14 @@ import {
 } from "@/components/ui/popover"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { useVacunaContext } from "../context/VacunaContext"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Calendar } from "@/components/ui/calendar"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
-import { useVacunaContext } from "../context/VacunaContext"
+import { ConfirmDialog } from "@/src/components/ConfirmDialog"
+import { useConfirmDialog } from "@/src/hooks/useConfirmDialog"
+import { useMascotaContext } from "../../mascotas/context/MascotaContext"
 import { VacunaNewRequest } from "../types"
 import SelectMascota from "./SelectMascota"
 
@@ -63,7 +66,9 @@ interface AddVacunaModalProps {
 
 export default function AddVacunaModal({ open, onOpenChange }: AddVacunaModalProps) {
   const { createVacuna, loading } = useVacunaContext()
+  const { getMascotaById } = useMascotaContext()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const { isOpen, options, showConfirmDialog, hideConfirmDialog, handleConfirm } = useConfirmDialog()
 
   // Función para obtener la fecha actual en formato YYYY-MM-DD
   const getFechaActual = useCallback(() => {
@@ -97,7 +102,7 @@ export default function AddVacunaModal({ open, onOpenChange }: AddVacunaModalPro
     },
   })
 
-  // CORREGIDO: Calcular fecha de vencimiento automáticamente
+  // Calcular fecha de vencimiento automáticamente
   const calcularFechaVencimiento = useCallback((fechaAplicacion: string, mesesVigencia: number) => {
     if (!fechaAplicacion || !mesesVigencia) return ""
     
@@ -106,7 +111,7 @@ export default function AddVacunaModal({ open, onOpenChange }: AddVacunaModalPro
     return dateToString(fecha)
   }, [stringToDate, dateToString])
 
-  // CORREGIDO: Calcular próxima dosis (30 días antes del vencimiento)
+  // Calcular próxima dosis (30 días antes del vencimiento)
   const calcularProximaDosis = useCallback((fechaVencimiento: string) => {
     if (!fechaVencimiento) return ""
     
@@ -115,7 +120,7 @@ export default function AddVacunaModal({ open, onOpenChange }: AddVacunaModalPro
     return dateToString(fecha)
   }, [stringToDate, dateToString])
 
-  // NUEVO: Función combinada para actualizar ambas fechas
+  // Función combinada para actualizar ambas fechas
   const actualizarFechas = useCallback((fechaAplicacion: string, mesesVigencia: number) => {
     if (fechaAplicacion && mesesVigencia) {
       const fechaVencimiento = calcularFechaVencimiento(fechaAplicacion, mesesVigencia)
@@ -151,7 +156,7 @@ export default function AddVacunaModal({ open, onOpenChange }: AddVacunaModalPro
     }
   }, [open, form, getFechaActual, actualizarFechas])
 
-  // CORREGIDO: Watcher para fechas automáticas
+  // Watcher para fechas automáticas
   const fechaAplicacion = form.watch("fechaAplicacion")
   const mesesVigencia = form.watch("mesesVigencia")
   
@@ -163,6 +168,44 @@ export default function AddVacunaModal({ open, onOpenChange }: AddVacunaModalPro
 
   // Watch para detectar cuando se selecciona "Otra"
   const tipoSeleccionado = form.watch("tipo")
+  const mascotaSeleccionada = form.watch("mascotaId")
+
+  // Función para obtener el nombre de la mascota usando el contexto de mascotas
+  const getMascotaNombre = useCallback(async () => {
+    if (!mascotaSeleccionada) return "la mascota seleccionada"
+    
+    try {
+      const mascota = await getMascotaById(mascotaSeleccionada)
+      return mascota ? mascota.nombre : "la mascota seleccionada"
+    } catch (error) {
+      console.error("Error al obtener mascota:", error)
+      return "la mascota seleccionada"
+    }
+  }, [mascotaSeleccionada, getMascotaById])
+
+  // Función para mostrar el modal de confirmación con nombre de mascota
+  const handleSubmitWithConfirmation = useCallback(async () => {
+    const isValid = await form.trigger()
+    if (!isValid) return
+
+    const values = form.getValues()
+    const tipoVacuna = values.tipo === "Otra" ? values.tipoPersonalizado : values.tipo
+    
+    // Obtener el nombre de la mascota de forma asíncrona
+    const mascotaNombre = await getMascotaNombre()
+
+    showConfirmDialog(
+      {
+        title: "Confirmar registro",
+        message: `¿Estás seguro de registrar la vacuna "${tipoVacuna}" para ${mascotaNombre}?\n\nEsta acción no se puede modificar después.`,
+        buttons: {
+          cancel: "Revisar",
+          confirm: "Sí, registrar"
+        }
+      },
+      handleSubmit
+    )
+  }, [form, showConfirmDialog, getMascotaNombre])
 
   const handleSubmit = useCallback(async () => {
     const values = form.getValues()
@@ -211,76 +254,100 @@ export default function AddVacunaModal({ open, onOpenChange }: AddVacunaModalPro
   ]
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Syringe className="h-5 w-5" />
-            Registrar Nueva Vacuna
-          </DialogTitle>
-          <DialogDescription>
-            Registra la aplicación de una vacuna y programa las siguientes dosis.
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Syringe className="h-5 w-5" />
+              Registrar Nueva Vacuna
+            </DialogTitle>
+            <DialogDescription>
+              Registra la aplicación de una vacuna y programa las siguientes dosis.
+            </DialogDescription>
+          </DialogHeader>
 
-        <Form {...form}>
-          <div className="space-y-4">
-            {/* Información de la Vacuna */}
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="tipo"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tipo de Vacuna</FormLabel>
-                    <Select onValueChange={(value) => {
-                      field.onChange(value)
-                      // Limpiar el campo personalizado si no es "Otra"
-                      if (value !== "Otra") {
-                        form.setValue("tipoPersonalizado", "")
-                      }
-                    }} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecciona el tipo" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {tiposVacuna.map((tipo) => (
-                          <SelectItem key={tipo} value={tipo}>
-                            {tipo}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Input condicional para tipo personalizado */}
-              {tipoSeleccionado === "Otra" && (
+          <Form {...form}>
+            <div className="space-y-4">
+              {/* Información de la Vacuna */}
+              <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="tipoPersonalizado"
+                  name="tipo"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Especificar Tipo de Vacuna</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Escriba el tipo de vacuna"
-                          {...field}
-                          disabled={isSubmitting}
-                        />
-                      </FormControl>
+                      <FormLabel>Tipo de Vacuna</FormLabel>
+                      <Select onValueChange={(value) => {
+                        field.onChange(value)
+                        // Limpiar el campo personalizado si no es "Otra"
+                        if (value !== "Otra") {
+                          form.setValue("tipoPersonalizado", "")
+                        }
+                      }} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecciona el tipo" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {tiposVacuna.map((tipo) => (
+                            <SelectItem key={tipo} value={tipo}>
+                              {tipo}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-              )}
 
-              {/* Solo mostrar selector de mascota si no se seleccionó "Otra" */}
-              {tipoSeleccionado !== "Otra" && (
+                {/* Input condicional para tipo personalizado */}
+                {tipoSeleccionado === "Otra" && (
+                  <FormField
+                    control={form.control}
+                    name="tipoPersonalizado"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Especificar Tipo de Vacuna</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Escriba el tipo de vacuna"
+                            {...field}
+                            disabled={isSubmitting}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+
+                {/* Solo mostrar selector de mascota si no se seleccionó "Otra" */}
+                {tipoSeleccionado !== "Otra" && (
+                  <FormField
+                    control={form.control}
+                    name="mascotaId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Mascota</FormLabel>
+                        <FormControl>
+                          <SelectMascota
+                            value={field.value}
+                            onValueChange={field.onChange}
+                            placeholder="Buscar mascota"
+                            disabled={isSubmitting}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+              </div>
+
+              {/* Selector de mascota en fila separada cuando se selecciona "Otra" */}
+              {tipoSeleccionado === "Otra" && (
                 <FormField
                   control={form.control}
                   name="mascotaId"
@@ -300,165 +367,156 @@ export default function AddVacunaModal({ open, onOpenChange }: AddVacunaModalPro
                   )}
                 />
               )}
-            </div>
 
-            {/* Selector de mascota en fila separada cuando se selecciona "Otra" */}
-            {tipoSeleccionado === "Otra" && (
-              <FormField
-                control={form.control}
-                name="mascotaId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Mascota</FormLabel>
-                    <FormControl>
-                      <SelectMascota
-                        value={field.value}
-                        onValueChange={field.onChange}
-                        placeholder="Buscar mascota"
-                        disabled={isSubmitting}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
+              <Separator className="my-4" />
 
-            <Separator className="my-4" />
-
-            {/* Fechas y Vigencia */}
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="fechaAplicacion"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Fecha de Aplicación</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "w-full pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value ? (
-                              format(stringToDate(field.value), "PPP", { locale: es })
-                            ) : (
-                              <span>Selecciona fecha</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value ? stringToDate(field.value) : undefined}
-                          onSelect={(date) => {
-                            if (date) {
-                              field.onChange(dateToString(date))
+              {/* Fechas y Vigencia */}
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="fechaAplicacion"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Fecha de Aplicación</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value ? (
+                                format(stringToDate(field.value), "PPP", { locale: es })
+                              ) : (
+                                <span>Selecciona fecha</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value ? stringToDate(field.value) : undefined}
+                            onSelect={(date) => {
+                              if (date) {
+                                field.onChange(dateToString(date))
+                              }
+                            }}
+                            disabled={(date) =>
+                              date > new Date() || date < new Date("1900-01-01")
                             }
-                          }}
-                          disabled={(date) =>
-                            date > new Date() || date < new Date("1900-01-01")
-                          }
-                          defaultMonth={new Date()}
-                          initialFocus
+                            defaultMonth={new Date()}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="mesesVigencia"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Meses de Vigencia</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="12"
+                          min={1}
+                          max={60}
+                          {...field}
+                          onChange={(e) => field.onChange(Number(e.target.value) || 0)}
                         />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-              <FormField
-                control={form.control}
-                name="mesesVigencia"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Meses de Vigencia</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="12"
-                        min={1}
-                        max={60}
-                        {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value) || 0)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* Fechas Calculadas */}
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="fechaVencimiento"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Fecha de Vencimiento</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="date"
+                          {...field}
+                          className="text-muted-foreground"
+                          readOnly
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="proximaDosis"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Próxima Dosis (Recordatorio)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="date"
+                          {...field}
+                          className="text-muted-foreground"
+                          readOnly
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
+          </Form>
 
-            {/* Fechas Calculadas */}
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="fechaVencimiento"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Fecha de Vencimiento</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="date"
-                        {...field}
-                        className="text-muted-foreground"
-                        readOnly
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => onOpenChange(false)}
+              disabled={isSubmitting}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              className="mx-1"
+              type="button" 
+              disabled={isSubmitting || loading}
+              onClick={handleSubmitWithConfirmation}
+            >
+              {isSubmitting ? "Registrando..." : "Registrar Vacuna"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-              <FormField
-                control={form.control}
-                name="proximaDosis"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Próxima Dosis (Recordatorio)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="date"
-                        {...field}
-                        className="text-muted-foreground"
-                        readOnly
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
-        </Form>
-
-        <DialogFooter className="gap-2 sm:gap-0">
-          <Button 
-            type="button" 
-            variant="outline" 
-            onClick={() => onOpenChange(false)}
-            disabled={isSubmitting}
-          >
-            Cancelar
-          </Button>
-          <Button 
-            className="mx-1"
-            type="button" 
-            disabled={isSubmitting || loading}
-            onClick={form.handleSubmit(handleSubmit)}
-          >
-            {isSubmitting ? "Registrando..." : "Registrar Vacuna"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      {/* Modal de Confirmación */}
+      {options && (
+        <ConfirmDialog
+          open={isOpen}
+          onOpenChange={hideConfirmDialog}
+          title={options.title}
+          message={options.message}
+          buttons={options.buttons}
+          onConfirm={handleConfirm}
+          loading={isSubmitting}
+        />
+      )}
+    </>
   )
 }
