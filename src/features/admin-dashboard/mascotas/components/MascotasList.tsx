@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { MoreHorizontal, Trash2, Eye, Heart, Palette, Plus, Edit } from "lucide-react"
 import {
   Table,
@@ -38,6 +39,7 @@ import EditMascotaModal from "./EditMascotaModal"
 import MascotaFilters from "./MascotaFilters"
 
 export default function MascotasList() {
+  const router = useRouter()
   const { mascotas, loading, getMascotas, deleteMascota } = useMascotaContext()
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [mascotaToDelete, setMascotaToDelete] = useState<MascotaDetails | null>(null)
@@ -69,6 +71,10 @@ export default function MascotasList() {
   const handleEditClick = (mascota: MascotaDetails) => {
     setMascotaToEdit(mascota)
     setIsEditModalOpen(true)
+  }
+
+  const handleViewDetails = (mascotaId: string) => {
+    router.push(`/dashboard/admin/mascotas/${mascotaId}`)
   }
 
   const getEspecieColor = (especie: string) => {
@@ -197,7 +203,7 @@ export default function MascotasList() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleViewDetails(mascota.id)}>
                           <Eye className="mr-2 h-4 w-4" />
                           Ver detalles
                         </DropdownMenuItem>

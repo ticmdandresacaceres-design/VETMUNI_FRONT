@@ -1,5 +1,5 @@
 import { ENDPOINTS } from "@/src/lib/api/endpoint";
-import { MascotaCreateResponse, MascotaDeleteResponse, MascotaDetails, MascotaNewRequest, MascotaUpdateRequest, MascotaUpdateResponse } from "../types";
+import { MascotaCreateResponse, MascotaDeleteResponse, MascotaDetails, MascotaNewRequest, MascotaPageDetails, MascotaUpdateRequest, MascotaUpdateResponse } from "../types";
 import apiClient, { ApiError } from "@/src/lib/api/axios";
 
 
@@ -101,6 +101,19 @@ export async function filter(especie?: string, sexo?: string, raza?: string): Pr
             throw error;
         }
         throw new ApiError("Error inesperado al filtrar mascotas");
+    }
+}
+
+export async function getPage(mascotaId: string): Promise<MascotaPageDetails> {
+    try{
+        const response = await apiClient.get<MascotaPageDetails>(ENDPOINTS.admin.mascotas.page(mascotaId));
+        return response.data;
+    } catch (error) {
+        if(error instanceof ApiError){
+            console.error("API Error:", error.message);
+            throw error;
+        }
+        throw new ApiError("Error inesperado al obtener la página de mascotas");
     }
 }
 

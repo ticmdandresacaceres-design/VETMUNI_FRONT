@@ -1,15 +1,17 @@
 import { useState, useCallback } from 'react';
-import { findAll, findById, create, update, remove, search, filter } from '../services/MascotaService';
-import { MascotaDetails, MascotaNewRequest, MascotaUpdateRequest, MascotaCreateResponse, MascotaUpdateResponse, MascotaDeleteResponse } from '../types';
+import { findAll, findById, create, update, remove, search, filter, getPage } from '../services/MascotaService';
+import { MascotaDetails, MascotaNewRequest, MascotaUpdateRequest, MascotaCreateResponse, MascotaUpdateResponse, MascotaDeleteResponse, MascotaPageDetails } from '../types';
 import { toast } from "sonner";
 
 // Definición de la interfaz para el hook useMascotas
 interface UseMascotasReturn {
     mascotas: MascotaDetails[];
+    mascotaPage: MascotaPageDetails | null;
     loading: boolean;
     error: string | null;
     getMascotas: () => Promise<void>;
     getMascotaById: (id: string) => Promise<MascotaDetails | null>;
+    getMascotaPage: (mascotaId: string) => Promise<MascotaPageDetails | null>;
     createMascota: (payload: MascotaNewRequest) => Promise<boolean>;
     updateMascota: (id: string, payload: MascotaUpdateRequest) => Promise<boolean>;
     deleteMascota: (id: string) => Promise<boolean>;
@@ -28,6 +30,7 @@ const useMascotas = (): UseMascotasReturn => {
 
     // Estado para mascotas, carga y errores
     const [mascotas, setMascotas] = useState<MascotaDetails[]>([]);
+    const [mascotaPage, setMascotaPage] = useState<MascotaPageDetails | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -63,6 +66,24 @@ const useMascotas = (): UseMascotasReturn => {
             const message = getErrorMessage(error);
             setError(message);
             toast.error(`Error al cargar la mascota: ${message}`);
+            return null;
+        } finally {
+            setLoading(false);
+        }
+    }, [clearError]);
+
+    // Obtener página completa de una mascota con todos sus detalles
+    const getMascotaPage = useCallback(async (mascotaId: string): Promise<MascotaPageDetails | null> => {
+        setLoading(true);
+        clearError();
+        try {
+            const data = await getPage(mascotaId);
+            setMascotaPage(data);
+            return data;
+        } catch (error: unknown) {
+            const message = getErrorMessage(error);
+            setError(message);
+            toast.error(`Error al cargar los detalles de la mascota: ${message}`);
             return null;
         } finally {
             setLoading(false);
@@ -198,11 +219,13 @@ const useMascotas = (): UseMascotasReturn => {
     return {
         // Estados 
         mascotas,
+        mascotaPage,
         loading,
         error,
         // Métodos
         getMascotas,
         getMascotaById,
+        getMascotaPage,
         createMascota,
         updateMascota,
         deleteMascota,

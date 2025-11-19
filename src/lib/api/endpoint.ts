@@ -36,6 +36,7 @@ export const ENDPOINTS = {
       delete: (id: string) => `/admin/mascota/${id}`,
       search: '/admin/mascota/search',
       filter: '/admin/mascota/filter',
+      page: (id: string) => `/admin/mascota/page/${id}`,
     },
     vacunas: {
       list: '/admin/vacuna',
