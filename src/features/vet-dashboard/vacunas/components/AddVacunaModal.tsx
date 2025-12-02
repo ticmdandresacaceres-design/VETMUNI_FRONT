@@ -65,8 +65,6 @@ export default function AddVacunaModal({ open, onOpenChange }: AddVacunaModalPro
   const { createVacuna, loading } = useVacunaContext()
   const { getMascotaById } = useMascotaContext()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [fechaVencimientoPreview, setFechaVencimientoPreview] = useState("")
-  const [proximaDosisPreview, setProximaDosisPreview] = useState("")
   const { isOpen, options, showConfirmDialog, hideConfirmDialog, handleConfirm } = useConfirmDialog()
 
   const getFechaActual = useCallback(() => new Date().toISOString().split('T')[0], [])
@@ -83,33 +81,6 @@ export default function AddVacunaModal({ open, onOpenChange }: AddVacunaModalPro
     return `${year}-${month}-${day}`
   }, [])
 
-  const calcularFechaVencimiento = useCallback((fechaAplicacion: string, mesesVigencia: number) => {
-    if (!fechaAplicacion || !mesesVigencia) return ""
-    const fecha = stringToDate(fechaAplicacion)
-    fecha.setMonth(fecha.getMonth() + mesesVigencia)
-    return dateToString(fecha)
-  }, [stringToDate, dateToString])
-
-  const calcularProximaDosis = useCallback((fechaVencimiento: string) => {
-    if (!fechaVencimiento) return ""
-    const fecha = stringToDate(fechaVencimiento)
-    fecha.setDate(fecha.getDate() - 30)
-    return dateToString(fecha)
-  }, [stringToDate, dateToString])
-
-  const actualizarFechasPreview = useCallback((fechaAplicacion: string, mesesVigencia: number) => {
-    if (fechaAplicacion && mesesVigencia) {
-      const fechaVencimiento = calcularFechaVencimiento(fechaAplicacion, mesesVigencia)
-      setFechaVencimientoPreview(fechaVencimiento)
-      if (fechaVencimiento) {
-        setProximaDosisPreview(calcularProximaDosis(fechaVencimiento))
-      }
-    } else {
-      setFechaVencimientoPreview("")
-      setProximaDosisPreview("")
-    }
-  }, [calcularFechaVencimiento, calcularProximaDosis])
-
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -123,35 +94,20 @@ export default function AddVacunaModal({ open, onOpenChange }: AddVacunaModalPro
 
   useEffect(() => {
     if (open) {
-      const fechaActual = getFechaActual()
       form.reset({
         tipo: "",
         tipoPersonalizado: "",
-        fechaAplicacion: fechaActual,
+        fechaAplicacion: getFechaActual(),
         mascotaId: "",
         mesesVigencia: 12,
       })
-      actualizarFechasPreview(fechaActual, 12)
     } else {
       form.reset()
-      setFechaVencimientoPreview("")
-      setProximaDosisPreview("")
     }
-  }, [open, form, getFechaActual, actualizarFechasPreview])
+  }, [open, form, getFechaActual])
 
-  const fechaAplicacion = form.watch("fechaAplicacion")
-  const mesesVigencia = form.watch("mesesVigencia")
   const tipoSeleccionado = form.watch("tipo")
   const mascotaSeleccionada = form.watch("mascotaId")
-  
-  useEffect(() => {
-    if (fechaAplicacion && mesesVigencia && mesesVigencia > 0) {
-      actualizarFechasPreview(fechaAplicacion, mesesVigencia)
-    } else {
-      setFechaVencimientoPreview("")
-      setProximaDosisPreview("")
-    }
-  }, [fechaAplicacion, mesesVigencia, actualizarFechasPreview])
 
   const getMascotaNombre = useCallback(async () => {
     if (!mascotaSeleccionada) return "la mascota seleccionada"
@@ -211,22 +167,19 @@ export default function AddVacunaModal({ open, onOpenChange }: AddVacunaModalPro
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] flex flex-col p-0 gap-0">
-          {/* Header */}
           <DialogHeader className="px-6 py-4 border-b shrink-0">
             <DialogTitle className="flex items-center gap-2 text-xl">
               <Syringe className="h-5 w-5" />
               Registrar Nueva Vacuna
             </DialogTitle>
             <DialogDescription>
-              Registra la aplicación de una vacuna. Las fechas de vencimiento y próxima dosis se calcularán automáticamente.
+              Registra la aplicación de una vacuna.
             </DialogDescription>
           </DialogHeader>
 
-          {/* Content scrolleable */}
           <div className="flex-1 overflow-y-auto px-6 py-4">
             <Form {...form}>
               <div className="space-y-6">
-                {/* Sección: Mascota (primero y destacado) */}
                 <div className="p-4 bg-muted/50 rounded-lg">
                   <FormField
                     control={form.control}
@@ -248,7 +201,6 @@ export default function AddVacunaModal({ open, onOpenChange }: AddVacunaModalPro
                   />
                 </div>
 
-                {/* Sección: Tipo de Vacuna */}
                 <div className="space-y-4">
                   <h3 className="text-sm font-medium text-muted-foreground">Tipo de Vacuna</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -299,7 +251,6 @@ export default function AddVacunaModal({ open, onOpenChange }: AddVacunaModalPro
                   </div>
                 </div>
 
-                {/* Sección: Aplicación y Vigencia */}
                 <div className="space-y-4">
                   <h3 className="text-sm font-medium text-muted-foreground">Aplicación y Vigencia</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -366,46 +317,10 @@ export default function AddVacunaModal({ open, onOpenChange }: AddVacunaModalPro
                     />
                   </div>
                 </div>
-
-                {/* Sección: Vista Previa de Fechas Calculadas */}
-                {(fechaVencimientoPreview || proximaDosisPreview) && (
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-medium text-muted-foreground">Vista Previa (Calculado automáticamente)</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {fechaVencimientoPreview && (
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium">Fecha de Vencimiento</label>
-                          <Input
-                            type="date"
-                            value={fechaVencimientoPreview}
-                            className="bg-muted text-muted-foreground"
-                            readOnly
-                          />
-                        </div>
-                      )}
-
-                      {proximaDosisPreview && (
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium">Próxima Dosis (Recordatorio)</label>
-                          <Input
-                            type="date"
-                            value={proximaDosisPreview}
-                            className="bg-muted text-muted-foreground"
-                            readOnly
-                          />
-                        </div>
-                      )}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      * Estas fechas se calcularán y almacenarán automáticamente en el servidor
-                    </p>
-                  </div>
-                )}
               </div>
             </Form>
           </div>
 
-          {/* Footer */}
           <DialogFooter className="px-6 py-4 border-t shrink-0 gap-2 sm:gap-0">
             <Button 
               type="button" 

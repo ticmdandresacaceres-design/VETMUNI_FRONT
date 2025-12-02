@@ -119,7 +119,7 @@ export default function MascotaFilters() {
 
       {/* Panel de filtros desplegable */}
       {showFilters && (
-        <div className="rounded-lg border bg-card p-4">
+        <div className="rounded-lg border bg-card p-4 mt-2">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:grid-cols-4">
             {/* Filtro por Especie */}
             <div className="space-y-2">

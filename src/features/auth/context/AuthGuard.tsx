@@ -27,33 +27,50 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
     const router = useRouter();
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
     const warningTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const isHandlingInactivityRef = useRef(false);
     
     // Tiempo en milisegundos
     const INACTIVITY_TIME = inactivityTimeoutMinutes * 60 * 1000;
     const WARNING_TIME = INACTIVITY_TIME - (1 * 60 * 1000); // Advertencia 1 minuto antes
 
     const handleLogoutDueToInactivity = useCallback(() => {
+        // Evitar múltiples ejecuciones
+        if (isHandlingInactivityRef.current) return;
+        isHandlingInactivityRef.current = true;
+
         tokenStorage.clearAll();
-        toast.error("Sesión cerrada por inactividad", {
-            description: "Tu sesión ha sido cerrada por seguridad debido a la inactividad.",
-            duration: 5000
-        });
-        router.push('/login');
+        
+        // Emitir evento para sincronizar otras pestañas
+        window.localStorage.setItem('inactivity-logout', Date.now().toString());
+        
+        // Solo mostrar toast en la pestaña activa
+        if (document.visibilityState === 'visible') {
+            toast.error("Sesión cerrada por inactividad", {
+                description: "Tu sesión ha sido cerrada por seguridad debido a la inactividad.",
+                duration: 5000
+            });
+        }
+        
+        setTimeout(() => {
+            router.push('/login');
+        }, 500);
     }, [router]);
 
     const showInactivityWarning = useCallback(() => {
-        toast.warning("Sesión expirará pronto", {
-            description: "Tu sesión expirará en 1 minuto por inactividad. Realiza alguna acción para mantenerla activa.",
-            duration: 10000,
-            action: {
-                label: "Mantener activa",
-                onClick: () => {
-
-                    resetInactivityTimer();
-                    toast.success("Sesión extendida");
+        // Solo mostrar en pestaña activa
+        if (document.visibilityState === 'visible') {
+            toast.warning("Sesión expirará pronto", {
+                description: "Tu sesión expirará en 1 minuto por inactividad. Realiza alguna acción para mantenerla activa.",
+                duration: 10000,
+                action: {
+                    label: "Mantener activa",
+                    onClick: () => {
+                        resetInactivityTimer();
+                        toast.success("Sesión extendida");
+                    }
                 }
-            }
-        });
+            });
+        }
     }, []);
 
     const resetInactivityTimer = useCallback(() => {
@@ -65,8 +82,11 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
             clearTimeout(warningTimeoutRef.current);
         }
 
-        // Solo configurar si está autenticado
-        if (isAuthenticated && !isLoading) {
+        // Resetear flag
+        isHandlingInactivityRef.current = false;
+
+        // Solo configurar si está autenticado y la pestaña está visible
+        if (isAuthenticated && !isLoading && document.visibilityState === 'visible') {
             // Timer para mostrar advertencia
             warningTimeoutRef.current = setTimeout(() => {
                 showInactivityWarning();
@@ -81,10 +101,26 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
 
     // Eventos que indican actividad del usuario
     const handleUserActivity = useCallback(() => {
-        if (isAuthenticated && !isLoading) {
+        if (isAuthenticated && !isLoading && document.visibilityState === 'visible') {
             resetInactivityTimer();
         }
     }, [isAuthenticated, isLoading, resetInactivityTimer]);
+
+    // Manejar cambio de visibilidad de la pestaña
+    const handleVisibilityChange = useCallback(() => {
+        if (document.visibilityState === 'visible') {
+            // Pestaña activa, reiniciar timer
+            resetInactivityTimer();
+        } else {
+            // Pestaña inactiva, pausar timers
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+            if (warningTimeoutRef.current) {
+                clearTimeout(warningTimeoutRef.current);
+            }
+        }
+    }, [resetInactivityTimer]);
 
     useEffect(() => {
         if (!isLoading && !isAuthenticated) {
@@ -103,19 +139,35 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
                 'click'
             ];
 
-            // Iniciar el timer
-            resetInactivityTimer();
+            // Iniciar el timer si la pestaña está visible
+            if (document.visibilityState === 'visible') {
+                resetInactivityTimer();
+            }
 
-            // Agregar listeners
+            // Agregar listeners de actividad
             events.forEach(event => {
                 document.addEventListener(event, handleUserActivity, true);
             });
+
+            // Listener de visibilidad
+            document.addEventListener('visibilitychange', handleVisibilityChange);
+
+            // Listener de eventos de storage (sincronización entre pestañas)
+            const handleStorageEvent = (event: StorageEvent) => {
+                if (event.key === 'inactivity-logout' && !isHandlingInactivityRef.current) {
+                    isHandlingInactivityRef.current = true;
+                    router.push('/login');
+                }
+            };
+            window.addEventListener('storage', handleStorageEvent);
 
             // Cleanup
             return () => {
                 events.forEach(event => {
                     document.removeEventListener(event, handleUserActivity, true);
                 });
+                document.removeEventListener('visibilitychange', handleVisibilityChange);
+                window.removeEventListener('storage', handleStorageEvent);
                 
                 if (timeoutRef.current) {
                     clearTimeout(timeoutRef.current);
@@ -125,7 +177,7 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
                 }
             };
         }
-    }, [isAuthenticated, isLoading, router, handleUserActivity, resetInactivityTimer]);
+    }, [isAuthenticated, isLoading, router, handleUserActivity, handleVisibilityChange, resetInactivityTimer]);
 
     // Cleanup al desmontar
     useEffect(() => {

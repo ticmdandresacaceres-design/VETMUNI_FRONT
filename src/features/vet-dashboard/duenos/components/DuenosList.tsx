@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { MoreHorizontal, Trash2, Eye, Phone, Mail, IdCard, Plus, Edit } from "lucide-react"
+import { MoreHorizontal, Trash2, Eye, Phone, Mail, IdCard, Plus, Edit, Users, Search, Filter } from "lucide-react"
 import {
   Table,
   TableBody,
@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -104,29 +105,38 @@ export default function DuenosList() {
   // No renderizar hasta que esté montado
   if (!isMounted) {
     return (
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-10 w-36" />
-        </div>
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nombre Completo</TableHead>
-                <TableHead>DNI</TableHead>
-                <TableHead>Correo</TableHead>
-                <TableHead>Teléfono</TableHead>
-                <TableHead>Dirección</TableHead>
-                <TableHead>Mascotas</TableHead>
-                <TableHead className="w-[70px]">Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <LoadingSkeleton />
-            </TableBody>
-          </Table>
-        </div>
+      <div className="space-y-6 animate-in fade-in duration-500">
+        <Card className="border-t-4 border-t-primary shadow-sm">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Skeleton className="h-8 w-48" />
+                <Skeleton className="h-4 w-64" />
+              </div>
+              <Skeleton className="h-10 w-40" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-lg border bg-card overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50">
+                    <TableHead>Nombre Completo</TableHead>
+                    <TableHead>DNI</TableHead>
+                    <TableHead>Correo</TableHead>
+                    <TableHead>Teléfono</TableHead>
+                    <TableHead>Dirección</TableHead>
+                    <TableHead>Mascotas</TableHead>
+                    <TableHead className="w-[70px]">Acciones</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <LoadingSkeleton />
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     )
   }
@@ -136,106 +146,214 @@ export default function DuenosList() {
 
   return (
     <>
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold">Lista de Dueños</h2>
-        <div className="flex flex-col md:flex-row gap-4 items-center">
-          <DuenoFilters />
-          <Button onClick={handleAddClick}>
-            <Plus className="mr-2 h-4 w-4" />
-            Agregar Dueño
-          </Button>
-        </div>
-      </div>
+      <div className="space-y-6 animate-in fade-in duration-500">
+        <Card className="border-t-4 border-t-primary shadow-sm">
+          <CardHeader className="pb-3">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <div className="space-y-1">
+                <CardTitle className="flex items-center gap-2 text-2xl">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <Users className="h-5 w-5 text-primary" />
+                  </div>
+                  Gestión de Propietarios
+                </CardTitle>
+                <CardDescription className="text-sm">
+                  Administra la información de los dueños de mascotas registrados
+                </CardDescription>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row gap-3">
+                <DuenoFilters />
+                <Button onClick={handleAddClick} size="default" className="gap-2 shadow-sm">
+                  <Plus className="h-4 w-4" />
+                  Agregar Propietario
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          
+          <CardContent>
+            {/* Stats Bar - Más compacta */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/40 border">
+                <div className="p-1.5 bg-primary/10 rounded-lg shrink-0">
+                  <Users className="h-4 w-4 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Mostrando</p>
+                  <p className="text-xl font-bold">{validDuenos.length}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/40 border">
+                <div className="p-1.5 bg-primary/10 rounded-lg shrink-0">
+                  <IdCard className="h-4 w-4 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Con Mascotas</p>
+                  <p className="text-xl font-bold">
+                    {validDuenos.filter(d => (d.cantidadmascotas || 0) > 0).length}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/40 border">
+                <div className="p-1.5 bg-primary/10 rounded-lg shrink-0">
+                  <Users className="h-4 w-4 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Sin Mascotas</p>
+                  <p className="text-xl font-bold">
+                    {validDuenos.filter(d => (d.cantidadmascotas || 0) === 0).length}
+                  </p>
+                </div>
+              </div>
+            </div>
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nombre Completo</TableHead>
-              <TableHead>DNI</TableHead>
-              <TableHead>Correo</TableHead>
-              <TableHead>Teléfono</TableHead>
-              <TableHead>Dirección</TableHead>
-              <TableHead>Mascotas</TableHead>
-              <TableHead className="w-[70px]">Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              <LoadingSkeleton />
-            ) : validDuenos.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center py-8">
-                  No se encontraron dueños registrados
-                </TableCell>
-              </TableRow>
-            ) : (
-              validDuenos.map((dueno) => (
-                <TableRow key={dueno.id}>
-                  <TableCell className="font-medium">
-                    {dueno.nombre || 'Sin nombre'}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <IdCard className="h-4 w-4 text-muted-foreground" />
-                      {dueno.dni || 'Sin DNI'}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-muted-foreground" />
-                      {dueno.correo || 'Sin correo'}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Phone className="h-4 w-4 text-muted-foreground" />
-                      {dueno.telefono || 'Sin teléfono'}
-                    </div>
-                  </TableCell>
-                  <TableCell className="max-w-[200px] truncate">
-                    {dueno.direccion || 'Sin dirección'}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="secondary">
-                      {dueno.cantidadmascotas || 0} mascota{(dueno.cantidadmascotas || 0) !== 1 ? 's' : ''}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Abrir menú</span>
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => handleViewDetails(dueno.id)}>
-                          <Eye className="mr-2 h-4 w-4" />
-                          Ver detalles
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleEditClick(dueno)}>
-                          <Edit className="mr-2 h-4 w-4" />
-                          Editar
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className="text-red-600"
-                          onClick={() => handleDeleteClick(dueno)}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Eliminar
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))
+            {/* Table - Con scroll horizontal controlado */}
+            <div className="rounded-lg border bg-card overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50 hover:bg-muted/50">
+                    <TableHead className="font-semibold min-w-[180px]">Nombre Completo</TableHead>
+                    <TableHead className="font-semibold min-w-[100px]">DNI</TableHead>
+                    <TableHead className="font-semibold min-w-[200px]">Correo</TableHead>
+                    <TableHead className="font-semibold min-w-[120px]">Teléfono</TableHead>
+                    <TableHead className="font-semibold min-w-[150px]">Dirección</TableHead>
+                    <TableHead className="font-semibold min-w-[100px]">Mascotas</TableHead>
+                    <TableHead className="w-[70px] font-semibold">Acciones</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {loading ? (
+                    <LoadingSkeleton />
+                  ) : validDuenos.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="h-64">
+                        <div className="flex flex-col items-center justify-center text-center">
+                          <div className="p-4 bg-muted/40 rounded-full mb-4">
+                            <Users className="h-10 w-10 text-muted-foreground/50" />
+                          </div>
+                          <h3 className="text-lg font-semibold mb-1">No hay propietarios registrados</h3>
+                          <p className="text-sm text-muted-foreground mb-6">
+                            Comienza agregando el primer propietario al sistema
+                          </p>
+                          <Button onClick={handleAddClick} size="sm" className="gap-2">
+                            <Plus className="h-4 w-4" />
+                            Agregar Primer Propietario
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    validDuenos.map((dueno) => (
+                      <TableRow 
+                        key={dueno.id} 
+                        className="hover:bg-muted/40 transition-colors cursor-pointer"
+                        onClick={() => handleViewDetails(dueno.id)}
+                      >
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                              <span className="text-xs font-semibold text-primary">
+                                {dueno.nombre?.charAt(0).toUpperCase() || 'N'}
+                              </span>
+                            </div>
+                            <span className="truncate">{dueno.nombre || 'Sin nombre'}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1.5">
+                            <IdCard className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                            <span className="truncate text-sm">{dueno.dni || 'Sin DNI'}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1.5">
+                            <Mail className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                            <span className="truncate text-sm" title={dueno.correo}>
+                              {dueno.correo || 'Sin correo'}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1.5">
+                            <Phone className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                            <span className="truncate text-sm">{dueno.telefono || 'Sin teléfono'}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <span className="truncate block text-sm" title={dueno.direccion}>
+                            {dueno.direccion || 'Sin dirección'}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <Badge 
+                            variant={dueno.cantidadmascotas && dueno.cantidadmascotas > 0 ? "default" : "secondary"}
+                            className="font-medium text-xs"
+                          >
+                            {dueno.cantidadmascotas || 0}
+                          </Badge>
+                        </TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                className="h-8 w-8 p-0 hover:bg-primary/10"
+                              >
+                                <span className="sr-only">Abrir menú</span>
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuLabel className="text-xs font-semibold">
+                                Acciones
+                              </DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem 
+                                onClick={() => handleViewDetails(dueno.id)}
+                                className="cursor-pointer"
+                              >
+                                <Eye className="mr-2 h-4 w-4" />
+                                Ver detalles
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => handleEditClick(dueno)}
+                                className="cursor-pointer"
+                              >
+                                <Edit className="mr-2 h-4 w-4" />
+                                Editar
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive cursor-pointer"
+                                onClick={() => handleDeleteClick(dueno)}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Eliminar
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Footer Info */}
+            {validDuenos.length > 0 && (
+              <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm text-muted-foreground">
+                <p>
+                  Mostrando <span className="font-medium text-foreground">{validDuenos.length}</span> propietario{validDuenos.length !== 1 ? 's' : ''}
+                </p>
+                <p className="text-xs">
+                  Haz clic en una fila para ver detalles completos
+                </p>
+              </div>
             )}
-          </TableBody>
-        </Table>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Add Dueño Modal */}
@@ -257,16 +375,37 @@ export default function DuenosList() {
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminará permanentemente el dueño{" "}
-              <strong>{duenoToDelete?.nombre}</strong> (DNI: {duenoToDelete?.dni}) del sistema.
+            <AlertDialogTitle className="flex items-center gap-2">
+              <div className="p-2 bg-destructive/10 rounded-lg">
+                <Trash2 className="h-5 w-5 text-destructive" />
+              </div>
+              ¿Estás seguro de eliminar este propietario?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>
+                Esta acción no se puede deshacer. Se eliminará permanentemente el propietario:
+              </p>
+              <div className="p-3 bg-muted rounded-lg space-y-1">
+                <p className="font-semibold text-foreground">{duenoToDelete?.nombre}</p>
+                <p className="text-sm flex items-center gap-2">
+                  <IdCard className="h-3 w-3" />
+                  DNI: {duenoToDelete?.dni}
+                </p>
+                {duenoToDelete?.cantidadmascotas && duenoToDelete.cantidadmascotas > 0 && (
+                  <p className="text-sm text-destructive font-medium">
+                    ⚠️ Este propietario tiene {duenoToDelete.cantidadmascotas} mascota{duenoToDelete.cantidadmascotas !== 1 ? 's' : ''} registrada{duenoToDelete.cantidadmascotas !== 1 ? 's' : ''}
+                  </p>
+                )}
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteConfirm}>
-              Eliminar
+            <AlertDialogAction 
+              onClick={handleDeleteConfirm}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              Eliminar definitivamente
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
