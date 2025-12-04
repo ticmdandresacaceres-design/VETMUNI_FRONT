@@ -16,7 +16,7 @@ function LoginPage() {
                             </div>
                         </div>
                         <h1 className="text-4xl font-bold text-foreground mb-2">
-                            VetAdmin Pro
+                            VetRegistry
                         </h1>
                         <p className="text-xl text-muted-foreground">
                             Sistema integral de gestión veterinaria

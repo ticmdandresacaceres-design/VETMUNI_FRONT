@@ -28,8 +28,7 @@ export const LoginForm = () => {
 
         try {
             const response = await login(formData);
-            toast.success("¡Inicio de sesión exitoso!");
-            
+            toast.success(`¡Bienvenido de nuevo, ${response.user.nombre}!`);
             // Redirigir según el rol del usuario
             const userRoles = response.user.roles;
             
@@ -44,7 +43,6 @@ export const LoginForm = () => {
             
         } catch (error: any) {
             console.error("Login error:", error);
-            toast.error(error.message || "Error al iniciar sesión");
         } finally {
             setIsLoading(false);
         }

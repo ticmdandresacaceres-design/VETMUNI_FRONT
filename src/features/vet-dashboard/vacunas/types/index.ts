@@ -7,6 +7,12 @@ export type VacunaNewRequest = {
     mesesVigencia: number;
 }
 
+export type VacunaUpdateRequest = {
+    tipo: string;
+    fechaAplicacion: string;
+    mesesVigencia: number;
+}
+
 export type VacunaDetails = {
     id: string;
     tipo: string;
@@ -19,4 +25,6 @@ export type VacunaDetails = {
 
 // Tipo de respuesta espicifico para eliminar
 export type VacunaCreateResponse = CreateResponse<VacunaDetails>;
+export type VacunaUpdateResponse = CreateResponse<VacunaDetails>;
 export type VacunaDeleteResponse = DeleteResponse;
+

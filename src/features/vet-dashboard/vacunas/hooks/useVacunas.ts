@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
-import { findAll, findById, create, filterByType, findByDateRange } from '../service/VacunaService';
-import { VacunaDetails, VacunaNewRequest, VacunaCreateResponse } from '../types';
+import { findAll, findById, create, filterByType, findByDateRange, update, remove } from '../service/VacunaService';
+import { VacunaDetails, VacunaNewRequest, VacunaCreateResponse, VacunaUpdateRequest } from '../types';
 import { toast } from "sonner";
 
 // Definición de la interfaz para el hook useVacunas
@@ -11,6 +11,8 @@ interface UseVacunasReturn {
     getVacunas: () => Promise<void>;
     getVacunaById: (id: string) => Promise<VacunaDetails | null>;
     createVacuna: (payload: VacunaNewRequest) => Promise<boolean>;
+    updateVacuna: (id: string, payload: VacunaUpdateRequest) => Promise<boolean>;
+    deleteVacuna: (id: string) => Promise<boolean>;
     filterVacunasByType: (type: string) => Promise<void>;
     filterVacunasByDateRange: (startDate: string, endDate: string) => Promise<void>;
     clearError: () => void;
@@ -101,6 +103,60 @@ const useVacunas = (): UseVacunasReturn => {
         }
     }, [clearError, getVacunas]);
 
+    // Actualizar vacuna existente
+    const updateVacuna = useCallback(async (id: string, payload: VacunaUpdateRequest): Promise<boolean> => {
+        setLoading(true);
+        clearError();
+        try {
+            const response = await update(id, payload);
+
+            if (response.success) {
+                await getVacunas();
+                toast.success('La vacuna ha sido actualizada exitosamente');
+                return true;
+            }
+
+            const message = response.message || 'Error al actualizar la vacuna';
+            setError(message);
+            toast.error(message);
+            return false;
+        } catch (error: unknown) {
+            const message = getErrorMessage(error);
+            setError(message);
+            toast.error(message);
+            return false;
+        } finally {
+            setLoading(false);
+        }
+    }, [clearError, getVacunas]);
+
+    // Eliminar vacuna
+    const deleteVacuna = useCallback(async (id: string): Promise<boolean> => {
+        setLoading(true);
+        clearError();
+        try {
+            const response = await remove(id);
+
+            if (response.success) {
+                await getVacunas();
+                toast.success('La vacuna ha sido eliminada exitosamente');
+                return true;
+            }
+
+            const message = response.message || 'Error al eliminar la vacuna';
+            setError(message);
+            toast.error(message);
+            return false;
+        } catch (error: unknown) {
+            const message = getErrorMessage(error);
+            setError(message);
+            toast.error(message);
+            return false;
+        } finally {
+            setLoading(false);
+        }
+    }, [clearError, getVacunas]);
+
     // Filtrar vacunas por tipo
     const filterVacunasByType = useCallback(async (type: string): Promise<void> => {
         if (!type.trim()) {
@@ -152,6 +208,8 @@ const useVacunas = (): UseVacunasReturn => {
         getVacunas,
         getVacunaById,
         createVacuna,
+        updateVacuna,
+        deleteVacuna,
         filterVacunasByType,
         filterVacunasByDateRange,
         clearError,

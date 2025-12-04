@@ -106,7 +106,7 @@ function DuenoPageDetails() {
                                     </AvatarFallback>
                                 </Avatar>
                                 <h2 className="text-2xl font-bold text-foreground">{nombre}</h2>
-                                <p className="text-sm text-muted-foreground mt-1">Cliente Registrado</p>
+                                <p className="text-sm text-muted-foreground mt-1">Dueño Registrado</p>
                             </div>
                             
                             <div className="p-6 space-y-4">

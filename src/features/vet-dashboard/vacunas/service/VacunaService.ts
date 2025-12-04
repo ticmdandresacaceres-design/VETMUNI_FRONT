@@ -1,5 +1,5 @@
 import apiClient, { ApiError } from "@/src/lib/api/axios";
-import { VacunaCreateResponse, VacunaDetails, VacunaNewRequest } from "../types";
+import { VacunaCreateResponse, VacunaDeleteResponse, VacunaDetails, VacunaNewRequest, VacunaUpdateRequest, VacunaUpdateResponse } from "../types";
 import { ENDPOINTS } from "@/src/lib/api/endpoint";
 
 
@@ -27,6 +27,32 @@ export async function create(payload: VacunaNewRequest): Promise<VacunaCreateRes
             throw error;
         }
         throw new Error("Error inesperado al crear la vacuna");
+    }
+}
+
+export async function update(id: string, payload: VacunaUpdateRequest): Promise<VacunaUpdateResponse> {
+    try{
+        const response = await apiClient.put<VacunaUpdateResponse>(ENDPOINTS.veterinaria.vacunas.update(id), payload);
+        return response.data;
+    }catch(error){
+        if(error instanceof ApiError){
+            console.log("API Error:", error.message);
+            throw error;
+        }
+        throw new Error("Error inesperado al actualizar la vacuna");
+    }
+}
+
+export async function remove(id: string): Promise<VacunaDeleteResponse> {
+    try{
+        const response = await apiClient.delete<VacunaDeleteResponse>(ENDPOINTS.veterinaria.vacunas.delete(id));
+        return response.data;
+    }catch(error){
+        if(error instanceof ApiError){
+            console.log("API Error:", error.message);
+            throw error;
+        }
+        throw new Error("Error inesperado al eliminar la vacuna");
     }
 }
 

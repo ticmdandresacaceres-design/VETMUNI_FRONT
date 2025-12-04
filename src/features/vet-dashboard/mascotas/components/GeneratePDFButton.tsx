@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { CreditCard, Download } from "lucide-react";
 import { useState } from "react";
 import { MascotaPageDetails } from "../types";
-import { generateMascotaPDF } from "@/src/lib/utils/generateMascotaPDF";
+import { generateMascotaPDF } from "@/src/lib/utils/dim-generador";
 import { toast } from "sonner";
 
 interface GeneratePDFButtonProps {
@@ -49,7 +49,7 @@ const GeneratePDFButton: React.FC<GeneratePDFButtonProps> = ({
             ) : (
                 <>
                     <CreditCard className="w-4 h-4" />
-                    Credencial
+                    Generar DNI
                 </>
             )}
         </Button>

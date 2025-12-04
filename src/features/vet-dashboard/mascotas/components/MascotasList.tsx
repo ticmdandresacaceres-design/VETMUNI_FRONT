@@ -101,6 +101,18 @@ export default function MascotasList() {
     return sexo?.toLowerCase() === 'macho' ? '♂' : '♀'
   }
 
+  const getEspecieBadge = (especie: string) => {
+    const especieLower = especie?.toLowerCase() || ''
+    const badges = {
+      'perro': 'default' as const,
+      'gato': 'secondary' as const,
+      'ave': 'outline' as const,
+      'conejo': 'outline' as const,
+      'hamster': 'outline' as const,
+    }
+    return badges[especieLower as keyof typeof badges] || 'outline' as const
+  }
+
   const LoadingSkeleton = () => (
     <>
       {[...Array(5)].map((_, index) => (
@@ -287,7 +299,7 @@ export default function MascotasList() {
                             {mascota.identificador || 'Sin ID'}
                           </TableCell>
                           <TableCell>
-                            <Badge className={`${getEspecieColor(mascota.especie)} text-xs font-medium`}>
+                            <Badge variant={getEspecieBadge(mascota.especie)} className="text-xs font-medium">
                               {mascota.especie || 'N/A'}
                             </Badge>
                           </TableCell>
@@ -300,7 +312,7 @@ export default function MascotasList() {
                           <TableCell>
                             <div className="flex items-center gap-1 text-sm">
                               <span className="text-base">{getSexoIcon(mascota.sexo)}</span>
-                              <span className="truncate text-xs">{mascota.sexo || 'N/A'}</span>
+                              <span>{mascota.sexo || 'N/A'}</span>
                             </div>
                           </TableCell>
                           <TableCell>

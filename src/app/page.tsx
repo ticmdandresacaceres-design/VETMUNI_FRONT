@@ -70,7 +70,7 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       {/* Header */}
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 shadow-sm">
+      <header className="border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 sticky top-0 z-50 shadow-sm">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 cursor-pointer" onClick={() => scrollToSection('hero')}>
@@ -148,7 +148,7 @@ export default function Home() {
           <CarouselContent>
             {campaigns.map((campaign, index) => (
               <CarouselItem key={index}>
-                <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-primary via-primary to-primary/90 h-[450px] lg:h-[550px] shadow-2xl">
+                <div className="relative rounded-3xl overflow-hidden bg-linear-to-br from-primary via-primary to-primary/90 h-[450px] lg:h-[550px] shadow-2xl">
                   <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDE0YzAtOC44MzctNy4xNjMtMTYtMTYtMTZTNCAxNC4xNjMgNCAxNHM3LjE2MyAxNiAxNiAxNiAxNi03LjE2MyAxNi0xNnpNIDAgMTRjMC03LjczMiA2LjI2OC0xNCAxNC0xNHMxNCA2LjI2OCAxNCAxNC02LjI2OCAxNC0xNCAxNC0xNC02LjI2OC0xNC0xNHoiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-30"></div>
                   
                   <div className="relative h-full flex flex-col justify-center px-8 lg:px-16 text-primary-foreground">
@@ -303,7 +303,7 @@ export default function Home() {
                   <div className="w-20 h-20 bg-primary rounded-2xl flex items-center justify-center mx-auto shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all">
                     <step.icon className="h-10 w-10 text-primary-foreground" />
                   </div>
-                  <div className="absolute -top-2 -right-2 left-0 right-0 mx-auto w-8 h-8 bg-secondary rounded-full flex items-center justify-center font-bold text-sm shadow-md">
+                  <div className="absolute -top-2 right-0 left-0  mx-auto w-8 h-8 bg-secondary rounded-full flex items-center justify-center font-bold text-sm shadow-md">
                     {step.step}
                   </div>
                 </div>
@@ -327,7 +327,7 @@ export default function Home() {
 
       {/* Stats Section */}
       <section className="container mx-auto px-6 py-20">
-        <div className="bg-gradient-to-br from-primary to-primary/90 rounded-3xl p-8 lg:p-16 text-primary-foreground shadow-2xl">
+        <div className="bg-linear-to-br from-primary to-primary/90 rounded-3xl p-8 lg:p-16 text-primary-foreground shadow-2xl">
           <div className="text-center mb-12">
             <h2 className="text-3xl lg:text-5xl font-bold mb-4">
               Vecinos que ya confían en nosotros
@@ -380,7 +380,7 @@ export default function Home() {
                   "Educación sobre tenencia responsable"
                 ].map((item, index) => (
                   <div key={index} className="flex items-center gap-4 group">
-                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-primary transition-colors">
+                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center shrink-0 group-hover:bg-primary transition-colors">
                       <CheckCircle className="h-5 w-5 text-primary group-hover:text-primary-foreground transition-colors" />
                     </div>
                     <span className="font-medium text-lg">{item}</span>
@@ -414,7 +414,7 @@ export default function Home() {
       {/* Contact CTA */}
       <section id="contacto" className="container mx-auto px-6 py-20 scroll-mt-20">
         <Card className="overflow-hidden shadow-2xl">
-          <div className="bg-gradient-to-r from-primary via-primary to-primary/90 p-8 lg:p-16 text-primary-foreground">
+          <div className="bg-linear-to-r from-primary via-primary to-primary/90 p-8 lg:p-16 text-primary-foreground">
             <div className="max-w-3xl mx-auto text-center">
               <h2 className="text-3xl lg:text-5xl font-bold mb-6">
                 ¿Listo para registrar a tu mascota?

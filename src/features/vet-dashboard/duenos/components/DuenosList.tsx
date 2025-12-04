@@ -90,12 +90,12 @@ export default function DuenosList() {
     <>
       {[...Array(5)].map((_, index) => (
         <TableRow key={index}>
-          <TableCell><Skeleton className="h-4 w-[200px]" /></TableCell>
-          <TableCell><Skeleton className="h-4 w-[120px]" /></TableCell>
-          <TableCell><Skeleton className="h-4 w-[150px]" /></TableCell>
-          <TableCell><Skeleton className="h-4 w-[120px]" /></TableCell>
-          <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
-          <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+          <TableCell><Skeleton className="h-4 w-full max-w-[200px]" /></TableCell>
+          <TableCell><Skeleton className="h-4 w-full max-w-[120px]" /></TableCell>
+          <TableCell><Skeleton className="h-4 w-full max-w-[150px]" /></TableCell>
+          <TableCell><Skeleton className="h-4 w-full max-w-[120px]" /></TableCell>
+          <TableCell><Skeleton className="h-4 w-full max-w-[100px]" /></TableCell>
+          <TableCell><Skeleton className="h-4 w-full max-w-[60px]" /></TableCell>
           <TableCell><Skeleton className="h-8 w-8" /></TableCell>
         </TableRow>
       ))}
@@ -117,23 +117,19 @@ export default function DuenosList() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="rounded-lg border bg-card overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/50">
-                    <TableHead>Nombre Completo</TableHead>
-                    <TableHead>DNI</TableHead>
-                    <TableHead>Correo</TableHead>
-                    <TableHead>Teléfono</TableHead>
-                    <TableHead>Dirección</TableHead>
-                    <TableHead>Mascotas</TableHead>
-                    <TableHead className="w-[70px]">Acciones</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <LoadingSkeleton />
-                </TableBody>
-              </Table>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-20 w-full" />
+              </div>
+              <div className="space-y-3">
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -209,136 +205,138 @@ export default function DuenosList() {
             </div>
 
             {/* Table - Con scroll horizontal controlado */}
-            <div className="rounded-lg border bg-card overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/50 hover:bg-muted/50">
-                    <TableHead className="font-semibold min-w-[180px]">Nombre Completo</TableHead>
-                    <TableHead className="font-semibold min-w-[100px]">DNI</TableHead>
-                    <TableHead className="font-semibold min-w-[200px]">Correo</TableHead>
-                    <TableHead className="font-semibold min-w-[120px]">Teléfono</TableHead>
-                    <TableHead className="font-semibold min-w-[150px]">Dirección</TableHead>
-                    <TableHead className="font-semibold min-w-[100px]">Mascotas</TableHead>
-                    <TableHead className="w-[70px] font-semibold">Acciones</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {loading ? (
-                    <LoadingSkeleton />
-                  ) : validDuenos.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={7} className="h-64">
-                        <div className="flex flex-col items-center justify-center text-center">
-                          <div className="p-4 bg-muted/40 rounded-full mb-4">
-                            <Users className="h-10 w-10 text-muted-foreground/50" />
-                          </div>
-                          <h3 className="text-lg font-semibold mb-1">No hay propietarios registrados</h3>
-                          <p className="text-sm text-muted-foreground mb-6">
-                            Comienza agregando el primer propietario al sistema
-                          </p>
-                          <Button onClick={handleAddClick} size="sm" className="gap-2">
-                            <Plus className="h-4 w-4" />
-                            Agregar Primer Propietario
-                          </Button>
-                        </div>
-                      </TableCell>
+            <div className="rounded-lg border bg-card">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50 hover:bg-muted/50">
+                      <TableHead className="font-semibold min-w-[180px]">Nombre Completo</TableHead>
+                      <TableHead className="font-semibold min-w-[100px]">DNI</TableHead>
+                      <TableHead className="font-semibold min-w-[200px]">Correo</TableHead>
+                      <TableHead className="font-semibold min-w-[120px]">Teléfono</TableHead>
+                      <TableHead className="font-semibold min-w-[150px]">Dirección</TableHead>
+                      <TableHead className="font-semibold min-w-[100px]">Mascotas</TableHead>
+                      <TableHead className="w-[70px] font-semibold">Acciones</TableHead>
                     </TableRow>
-                  ) : (
-                    validDuenos.map((dueno) => (
-                      <TableRow 
-                        key={dueno.id} 
-                        className="hover:bg-muted/40 transition-colors cursor-pointer"
-                        onClick={() => handleViewDetails(dueno.id)}
-                      >
-                        <TableCell className="font-medium">
-                          <div className="flex items-center gap-2">
-                            <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                              <span className="text-xs font-semibold text-primary">
-                                {dueno.nombre?.charAt(0).toUpperCase() || 'N'}
-                              </span>
+                  </TableHeader>
+                  <TableBody>
+                    {loading ? (
+                      <LoadingSkeleton />
+                    ) : validDuenos.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="h-64">
+                          <div className="flex flex-col items-center justify-center text-center">
+                            <div className="p-4 bg-muted/40 rounded-full mb-4">
+                              <Users className="h-10 w-10 text-muted-foreground/50" />
                             </div>
-                            <span className="truncate">{dueno.nombre || 'Sin nombre'}</span>
+                            <h3 className="text-lg font-semibold mb-1">No hay propietarios registrados</h3>
+                            <p className="text-sm text-muted-foreground mb-6">
+                              Comienza agregando el primer propietario al sistema
+                            </p>
+                            <Button onClick={handleAddClick} size="sm" className="gap-2">
+                              <Plus className="h-4 w-4" />
+                              Agregar Primer Propietario
+                            </Button>
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1.5">
-                            <IdCard className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                            <span className="truncate text-sm">{dueno.dni || 'Sin DNI'}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1.5">
-                            <Mail className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                            <span className="truncate text-sm" title={dueno.correo}>
-                              {dueno.correo || 'Sin correo'}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1.5">
-                            <Phone className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                            <span className="truncate text-sm">{dueno.telefono || 'Sin teléfono'}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <span className="truncate block text-sm" title={dueno.direccion}>
-                            {dueno.direccion || 'Sin dirección'}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <Badge 
-                            variant={dueno.cantidadmascotas && dueno.cantidadmascotas > 0 ? "default" : "secondary"}
-                            className="font-medium text-xs"
-                          >
-                            {dueno.cantidadmascotas || 0}
-                          </Badge>
-                        </TableCell>
-                        <TableCell onClick={(e) => e.stopPropagation()}>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button 
-                                variant="ghost" 
-                                className="h-8 w-8 p-0 hover:bg-primary/10"
-                              >
-                                <span className="sr-only">Abrir menú</span>
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48">
-                              <DropdownMenuLabel className="text-xs font-semibold">
-                                Acciones
-                              </DropdownMenuLabel>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem 
-                                onClick={() => handleViewDetails(dueno.id)}
-                                className="cursor-pointer"
-                              >
-                                <Eye className="mr-2 h-4 w-4" />
-                                Ver detalles
-                              </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                onClick={() => handleEditClick(dueno)}
-                                className="cursor-pointer"
-                              >
-                                <Edit className="mr-2 h-4 w-4" />
-                                Editar
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                className="text-destructive focus:text-destructive cursor-pointer"
-                                onClick={() => handleDeleteClick(dueno)}
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Eliminar
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+                    ) : (
+                      validDuenos.map((dueno) => (
+                        <TableRow 
+                          key={dueno.id} 
+                          className="hover:bg-muted/40 transition-colors cursor-pointer"
+                          onClick={() => handleViewDetails(dueno.id)}
+                        >
+                          <TableCell className="font-medium">
+                            <div className="flex items-center gap-2">
+                              <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                <span className="text-xs font-semibold text-primary">
+                                  {dueno.nombre?.charAt(0).toUpperCase() || 'N'}
+                                </span>
+                              </div>
+                              <span className="truncate">{dueno.nombre || 'Sin nombre'}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1.5">
+                              <IdCard className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                              <span className="truncate text-sm">{dueno.dni || 'Sin DNI'}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1.5">
+                              <Mail className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                              <span className="truncate text-sm" title={dueno.correo}>
+                                {dueno.correo || 'Sin correo'}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1.5">
+                              <Phone className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                              <span className="truncate text-sm">{dueno.telefono || 'Sin teléfono'}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <span className="truncate block text-sm" title={dueno.direccion}>
+                              {dueno.direccion || 'Sin dirección'}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <Badge 
+                              variant={dueno.cantidadmascotas && dueno.cantidadmascotas > 0 ? "default" : "secondary"}
+                              className="font-medium text-xs"
+                            >
+                              {dueno.cantidadmascotas || 0}
+                            </Badge>
+                          </TableCell>
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button 
+                                  variant="ghost" 
+                                  className="h-8 w-8 p-0 hover:bg-primary/10"
+                                >
+                                  <span className="sr-only">Abrir menú</span>
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuLabel className="text-xs font-semibold">
+                                  Acciones
+                                </DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem 
+                                  onClick={() => handleViewDetails(dueno.id)}
+                                  className="cursor-pointer"
+                                >
+                                  <Eye className="mr-2 h-4 w-4" />
+                                  Ver detalles
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  onClick={() => handleEditClick(dueno)}
+                                  className="cursor-pointer"
+                                >
+                                  <Edit className="mr-2 h-4 w-4" />
+                                  Editar
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  className="text-destructive focus:text-destructive cursor-pointer"
+                                  onClick={() => handleDeleteClick(dueno)}
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Eliminar
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
 
             {/* Footer Info */}

@@ -1,3 +1,4 @@
+import { update } from "@/src/features/vet-dashboard/mascotas/services/MascotaService";
 import { get } from "http";
 
 export const ENDPOINTS = {
@@ -53,6 +54,7 @@ export const ENDPOINTS = {
       getById: (id: string) => `/veterinaria/vacuna/${id}`,
       delete: (id: string) => `/veterinaria/vacuna/${id}`,
       filter: '/veterinaria/vacuna/filter',
+      update: (id: string) => `/veterinaria/vacuna/${id}`,
       findByDateRange: '/veterinaria/vacuna/date-range',
     },
     reportes: {

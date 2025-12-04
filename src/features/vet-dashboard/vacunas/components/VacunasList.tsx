@@ -1,21 +1,39 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Eye, Syringe, Plus, Calendar, Clock, AlertTriangle, Shield, CheckCircle } from "lucide-react"
+import { Eye, Syringe, Plus, Pencil, Trash2, Calendar, Clock, AlertTriangle, Shield, CheckCircle, Info } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { MoreHorizontal } from "lucide-react"
 import { useVacunaContext } from "../context/VacunaContext"
+import { VacunaDetails } from "../types"
 import AddVacunaModal from "./AddVacunaModal"
+import EditVacunaModal from "./EditVacunaModal"
 import VacunaFilters from "./VacunaFilters"
 import { formatDate } from "@/src/lib/utils/utils"
+import { ConfirmDialog } from "@/src/shared/components/ConfirmDialog"
+import { useConfirmDialog } from "@/src/shared/hooks/useConfirmDialog"
 
 export default function VacunasList() {
-  const { vacunas, loading, getVacunas } = useVacunaContext()
+  const { vacunas, loading, getVacunas, deleteVacuna } = useVacunaContext()
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [vacunaToEdit, setVacunaToEdit] = useState<VacunaDetails | null>(null)
+  const [vacunaToDelete, setVacunaToDelete] = useState<VacunaDetails | null>(null)
   const [isMounted, setIsMounted] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const { isOpen, options, showConfirmDialog, hideConfirmDialog, handleConfirm } = useConfirmDialog()
 
   useEffect(() => {
     setIsMounted(true)
@@ -31,68 +49,89 @@ export default function VacunasList() {
     setIsAddModalOpen(true)
   }
 
-  // Función para calcular días hasta una fecha
-  const calcularDiasHasta = (fechaString: string): number => {
-    const [year, month, day] = fechaString.split('-').map(Number)
-    const hoy = new Date()
-    hoy.setHours(0, 0, 0, 0)
-    const fechaObjetivo = new Date(year, month - 1, day)
-    const diferencia = fechaObjetivo.getTime() - hoy.getTime()
-    return Math.ceil(diferencia / (1000 * 3600 * 24))
+  const handleEditClick = (vacuna: VacunaDetails) => {
+    setVacunaToEdit(vacuna)
+    setIsEditModalOpen(true)
   }
 
-  // Función para obtener el estado de vencimiento
-  const getEstadoVencimiento = (fechaVencimiento: string) => {
-    const dias = calcularDiasHasta(fechaVencimiento)
-    
-    if (dias < 0) {
-      return { 
-        variant: "destructive" as const, 
-        icon: AlertTriangle, 
-        text: "Vencida",
-        className: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border-0"
+  const handleEditModalClose = (open: boolean) => {
+    setIsEditModalOpen(open)
+    if (!open) {
+      setVacunaToEdit(null)
+    }
+  }
+
+  const handleDeleteClick = (vacuna: VacunaDetails) => {
+    setVacunaToDelete(vacuna)
+    showConfirmDialog(
+      {
+        title: "Confirmar eliminación",
+        message: `¿Estás seguro de eliminar la vacuna "${vacuna.tipo}" de ${vacuna.mascota}?\n\nEsta acción no se puede deshacer.`,
+        buttons: {
+          cancel: "Cancelar",
+          confirm: "Sí, eliminar"
+        }
+      },
+      async () => {
+        setIsDeleting(true)
+        try {
+          await deleteVacuna(vacuna.id)
+          setVacunaToDelete(null)
+        } finally {
+          setIsDeleting(false)
+        }
       }
-    } else if (dias <= 30) {
-      return { 
-        variant: "secondary" as const, 
-        icon: Clock, 
+    )
+  }
+
+  const getEstadoVencimiento = (fechaVencimiento: string) => {
+    const hoy = new Date()
+    const vencimiento = new Date(fechaVencimiento)
+    const diferenciaDias = Math.ceil((vencimiento.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24))
+
+    if (diferenciaDias < 0) {
+      return {
+        text: "Vencida",
+        variant: "destructive" as const,
+        icon: AlertTriangle
+      }
+    } else if (diferenciaDias <= 30) {
+      return {
         text: "Por vencer",
-        className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 border-0"
+        variant: "secondary" as const,
+        icon: Clock
       }
     } else {
-      return { 
-        variant: "default" as const, 
-        icon: CheckCircle, 
+      return {
         text: "Vigente",
-        className: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border-0"
+        variant: "default" as const,
+        icon: CheckCircle
       }
     }
   }
 
-  // Función para obtener el estado de próxima dosis
   const getEstadoProximaDosis = (fechaProximaDosis: string) => {
-    const dias = calcularDiasHasta(fechaProximaDosis)
-    
-    if (dias < 0) {
-      return { 
-        variant: "destructive" as const, 
-        icon: AlertTriangle, 
+    const hoy = new Date()
+    const proximaDosis = new Date(fechaProximaDosis)
+    const diferenciaDias = Math.ceil((proximaDosis.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24))
+
+    if (diferenciaDias < 0) {
+      return {
         text: "Atrasada",
-        className: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border-0"
+        variant: "destructive" as const,
+        icon: AlertTriangle
       }
-    } else if (dias <= 7) {
-      return { 
-        variant: "secondary" as const, 
-        icon: Calendar, 
+    } else if (diferenciaDias <= 15) {
+      return {
         text: "Próxima",
-        className: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400 border-0"
+        variant: "secondary" as const,
+        icon: Clock
       }
     } else {
-      return { 
-        variant: "outline" as const, 
-        icon: Calendar, 
+      return {
         text: "Programada",
-        className: "border-0"
+        variant: "default" as const,
+        icon: Calendar
       }
     }
   }
@@ -101,11 +140,11 @@ export default function VacunasList() {
     <>
       {[...Array(5)].map((_, index) => (
         <TableRow key={index}>
+          <TableCell><Skeleton className="h-4 w-40" /></TableCell>
           <TableCell><Skeleton className="h-4 w-[120px]" /></TableCell>
           <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
-          <TableCell><Skeleton className="h-4 w-[90px]" /></TableCell>
           <TableCell><Skeleton className="h-6 w-20" /></TableCell>
-          <TableCell><Skeleton className="h-6 w-[90px]" /></TableCell>
+          <TableCell><Skeleton className="h-6 w-24" /></TableCell>
           <TableCell><Skeleton className="h-8 w-8" /></TableCell>
         </TableRow>
       ))}
@@ -126,23 +165,16 @@ export default function VacunasList() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="rounded-lg border bg-card">
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-muted/50">
-                      <TableHead>Tipo</TableHead>
-                      <TableHead>Mascota</TableHead>
-                      <TableHead>Fecha Aplicación</TableHead>
-                      <TableHead>Estado</TableHead>
-                      <TableHead>Próxima Dosis</TableHead>
-                      <TableHead>Acciones</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <LoadingSkeleton />
-                  </TableBody>
-                </Table>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-16 w-full" />
+              </div>
+              <div className="space-y-3">
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
               </div>
             </div>
           </CardContent>
@@ -152,14 +184,6 @@ export default function VacunasList() {
   }
 
   const validVacunas = Array.isArray(vacunas) ? vacunas.filter(vacuna => vacuna && vacuna.id) : []
-  
-  // Calcular estadísticas
-  const vigentes = validVacunas.filter(v => calcularDiasHasta(v.fechavencimiento) > 30).length
-  const porVencer = validVacunas.filter(v => {
-    const dias = calcularDiasHasta(v.fechavencimiento)
-    return dias <= 30 && dias >= 0
-  }).length
-  const vencidas = validVacunas.filter(v => calcularDiasHasta(v.fechavencimiento) < 0).length
 
   return (
     <>
@@ -173,10 +197,10 @@ export default function VacunasList() {
                   <div className="p-2 bg-primary/10 rounded-lg">
                     <Syringe className="h-5 w-5 text-primary" />
                   </div>
-                  Gestión de Vacunas
+                  Registro de Vacunas
                 </CardTitle>
                 <CardDescription className="text-sm">
-                  Administra el registro y seguimiento de vacunas aplicadas a las mascotas
+                  Administra y da seguimiento a las vacunas de tus mascotas
                 </CardDescription>
               </div>
               
@@ -186,15 +210,15 @@ export default function VacunasList() {
               </Button>
             </div>
 
-            {/* Filtros - Segunda fila */}
+            {/* Filtros - Segunda fila, ancho completo con separación */}
             <div className="w-full pt-2">
               <VacunaFilters />
             </div>
           </CardHeader>
           
           <CardContent>
-            {/* Stats Bar */}
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-6">
+            {/* Stats Bar - Solo de lo que se muestra */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
               <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/40 border">
                 <div className="p-1.5 bg-primary/10 rounded-lg shrink-0">
                   <Syringe className="h-4 w-4 text-primary" />
@@ -206,29 +230,24 @@ export default function VacunasList() {
               </div>
               <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/40 border">
                 <div className="p-1.5 bg-green-500/10 rounded-lg shrink-0">
-                  <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+                  <Shield className="h-4 w-4 text-green-600 dark:text-green-400" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Vigentes</p>
-                  <p className="text-xl font-bold">{vigentes}</p>
+                  <p className="text-xl font-bold">
+                    {validVacunas.filter(v => getEstadoVencimiento(v.fechavencimiento).text === "Vigente").length}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/40 border">
-                <div className="p-1.5 bg-yellow-500/10 rounded-lg shrink-0">
-                  <Clock className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+                <div className="p-1.5 bg-orange-500/10 rounded-lg shrink-0">
+                  <Clock className="h-4 w-4 text-orange-600 dark:text-orange-400" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Por Vencer</p>
-                  <p className="text-xl font-bold">{porVencer}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/40 border">
-                <div className="p-1.5 bg-red-500/10 rounded-lg shrink-0">
-                  <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Vencidas</p>
-                  <p className="text-xl font-bold">{vencidas}</p>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Próximas</p>
+                  <p className="text-xl font-bold">
+                    {validVacunas.filter(v => getEstadoProximaDosis(v.proximadosis).text === "Próxima").length}
+                  </p>
                 </div>
               </div>
             </div>
@@ -288,14 +307,14 @@ export default function VacunasList() {
                             <TableCell className="text-sm truncate">{vacuna.mascota || 'Sin mascota'}</TableCell>
                             <TableCell className="text-sm">{formatDate(vacuna.fechaaplicacion)}</TableCell>
                             <TableCell>
-                              <Badge className={`flex items-center gap-1 w-fit text-xs ${estadoVencimiento.className}`}>
+                              <Badge variant={estadoVencimiento.variant} className="flex items-center gap-1 w-fit text-xs">
                                 <IconVencimiento className="h-3 w-3" />
                                 {estadoVencimiento.text}
                               </Badge>
                             </TableCell>
                             <TableCell>
                               <div className="space-y-1">
-                                <Badge className={`flex items-center gap-1 w-fit text-xs ${estadoProximaDosis.className}`}>
+                                <Badge variant={estadoProximaDosis.variant} className="flex items-center gap-1 w-fit text-xs">
                                   <IconProximaDosis className="h-3 w-3" />
                                   {estadoProximaDosis.text}
                                 </Badge>
@@ -305,10 +324,35 @@ export default function VacunasList() {
                               </div>
                             </TableCell>
                             <TableCell>
-                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-primary/10">
-                                <Eye className="h-4 w-4" />
-                                <span className="sr-only">Ver detalles</span>
-                              </Button>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-primary/10">
+                                    <span className="sr-only">Abrir menú</span>
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-48">
+                                  <DropdownMenuLabel className="text-xs font-semibold">
+                                    Acciones
+                                  </DropdownMenuLabel>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem 
+                                    className="cursor-pointer"
+                                    onClick={() => handleEditClick(vacuna)}
+                                  >
+                                    <Pencil className="mr-2 h-4 w-4" />
+                                    Editar
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem 
+                                    className="text-destructive focus:text-destructive cursor-pointer"
+                                    onClick={() => handleDeleteClick(vacuna)}
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Eliminar
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </TableCell>
                           </TableRow>
                         )
@@ -323,11 +367,14 @@ export default function VacunasList() {
             {validVacunas.length > 0 && (
               <div className="mt-4 flex items-center justify-between gap-4 p-3 rounded-lg bg-muted/30 border">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Shield className="h-4 w-4 shrink-0" />
+                  <Info className="h-4 w-4 shrink-0" />
                   <span>
-                    Mostrando <span className="font-medium text-foreground">{validVacunas.length}</span> vacuna{validVacunas.length !== 1 ? 's' : ''} registrada{validVacunas.length !== 1 ? 's' : ''}
+                    Mostrando <span className="font-medium text-foreground">{validVacunas.length}</span> vacuna{validVacunas.length !== 1 ? 's' : ''}
                   </span>
                 </div>
+                <p className="text-xs text-muted-foreground hidden sm:block">
+                  Gestiona las vacunas de tus mascotas
+                </p>
               </div>
             )}
           </CardContent>
@@ -338,6 +385,26 @@ export default function VacunasList() {
         open={isAddModalOpen}
         onOpenChange={setIsAddModalOpen}
       />
+
+      {vacunaToEdit && (
+        <EditVacunaModal
+          open={isEditModalOpen}
+          onOpenChange={handleEditModalClose}
+          vacuna={vacunaToEdit}
+        />
+      )}
+
+      {options && (
+        <ConfirmDialog
+          open={isOpen}
+          onOpenChange={hideConfirmDialog}
+          title={options.title}
+          message={options.message}
+          buttons={options.buttons}
+          onConfirm={handleConfirm}
+          loading={isDeleting}
+        />
+      )}
     </>
   )
 }

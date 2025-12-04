@@ -58,7 +58,7 @@ export function PetsRegistrationChart({ data }: PetsRegistrationChartProps) {
                         </span>
                     </div>
                 </div>
-                <CardDescription className="text-xs text-slate-600">
+                <CardDescription className="text-xs">
                     Mascotas registradas por año
                 </CardDescription>
             </CardHeader>

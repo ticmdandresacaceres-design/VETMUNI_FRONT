@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { AuthState, LoginRequest, User } from '../types';
 import * as AuthService from '../service/AuthService';
 import { tokenStorage } from '@/src/lib/api/token-storage';
+import { ApiError } from '@/src/lib/api/axios';
 
 export const useAuth = () => {
     const [authState, setAuthState] = useState<AuthState>({
@@ -28,7 +29,7 @@ export const useAuth = () => {
         initializeAuth();
     }, []);
 
-    // Función de login
+    // Función de login - SOLO maneja la sesión
     const login = useCallback(async (credentials: LoginRequest) => {
         setAuthState(prev => ({ ...prev, isLoading: true }));
         
@@ -44,7 +45,11 @@ export const useAuth = () => {
 
             return response;
         } catch (error) {
-            setAuthState(prev => ({ ...prev, isLoading: false }));
+            setAuthState(prev => ({ 
+                ...prev, 
+                isLoading: false 
+            }));
+            
             throw error;
         }
     }, []);
@@ -63,14 +68,13 @@ export const useAuth = () => {
                 isLoading: false
             });
         } catch (error) {
-            // Limpiamos el estado local
             setAuthState({
                 user: null,
                 token: null,
                 isAuthenticated: false,
                 isLoading: false
             });
-            console.error('Error durante logout:', error);
+            throw error;
         }
     }, []);
 
