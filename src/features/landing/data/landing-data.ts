@@ -23,7 +23,7 @@ export const campaigns: Campaign[] = [
     image: "/images/campains/vacunacion.webp"
   },
   {
-    title: "Registro Gratuito",
+    title: "Registro Gratuito para nuevas mascotas",
     subtitle: "Promoción Especial",
     description: "Registra a tu mascota sin costo durante este mes",
     date: "Hasta el 30 Dic",
