@@ -16,7 +16,7 @@ function LoginPage() {
                         <div className="flex items-center justify-center lg:justify-start mb-6">
                             <div className="relative h-24 w-full max-w-[320px]">
                                 <Image
-                                    src="/images/landing/logomuni.webp"
+                                    src="/images/landing/logo-muni.webp"
                                     alt="Municipalidad Distrital Andrés Avelino Cáceres Dorregaray"
                                     fill
                                     className="object-contain object-center lg:object-left"
