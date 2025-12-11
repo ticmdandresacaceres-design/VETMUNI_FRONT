@@ -15,7 +15,7 @@ import { Campaign, Benefit, Step, Stat, Feature } from "../types";
 
 export const campaigns: Campaign[] = [
   {
-    title: "Campaña de Vacunación Gratuita",
+    title: "Campaña de Vacunación",
     subtitle: "Diciembre 2025",
     description: "Vacuna antirrábica gratuita para todas las mascotas registradas",
     date: "Todo el mes",
@@ -38,6 +38,7 @@ export const campaigns: Campaign[] = [
     badge: "Próxima",
     image: "/images/campains/esterilizacion.webp"
   }
+  
 ];
 
 export const benefits: Benefit[] = [

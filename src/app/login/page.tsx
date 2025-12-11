@@ -16,7 +16,7 @@ function LoginPage() {
                         <div className="flex items-center justify-center lg:justify-start mb-6">
                             <div className="relative h-24 w-full max-w-[320px]">
                                 <Image
-                                    src="/images/landing/logomuni.webp"
+                                    src="/images/landing/logo-muni.webp"
                                     alt="Municipalidad Distrital Andrés Avelino Cáceres Dorregaray"
                                     fill
                                     className="object-contain object-center lg:object-left"
@@ -90,7 +90,7 @@ function LoginPage() {
                                 ¿Problemas para ingresar?
                             </p>
                             <p className="text-sm text-primary font-medium cursor-pointer hover:underline">
-                                <a href="https://wa.me/+51992450988" target="_blank" rel="noopener noreferrer">
+                                <a href="https://wa.me/+51916366762" target="_blank" rel="noopener noreferrer">
                                     Contacta al administrador del sistema
                                 </a>
                             </p>
