@@ -17,7 +17,8 @@ export class ApiError extends Error {
 }
 
 // Para ejecuciones locales spring boot
-const apiClient = axios.create({baseURL: process.env.SPRING_BACKEND_URL || "http://localhost:8080/api/v1"});
+const apiClient = axios.create({baseURL: "https://vetmuniback-production.up.railway.app/api/v1"});
+//const apiClient = axios.create({baseURL: "https://vetmuniback-production.up.railway.app/api/v1"});
 
 // Interceptor de solicitud para agregar tokens de autenticación 
 apiClient.interceptors.request.use(
