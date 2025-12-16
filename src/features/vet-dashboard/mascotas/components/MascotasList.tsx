@@ -410,11 +410,13 @@ export default function MascotasList() {
               ¿Estás seguro de eliminar esta mascota?
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
-              <p>Esta acción no se puede deshacer. Se eliminará permanentemente:</p>
-              <div className="p-3 bg-muted rounded-lg space-y-1">
-                <p className="font-semibold text-foreground">{mascotaToDelete?.nombre}</p>
-                <p className="text-sm">Especie: {mascotaToDelete?.especie}</p>
-                <p className="text-sm">Dueño: {mascotaToDelete?.dueno}</p>
+              <div className="space-y-2">
+                <p>Esta acción no se puede deshacer. Se eliminará permanentemente:</p>
+                <div className="p-3 bg-muted rounded-lg space-y-1">
+                  <p className="font-semibold text-foreground">{mascotaToDelete?.nombre}</p>
+                  <p className="text-sm">Especie: {mascotaToDelete?.especie}</p>
+                  <p className="text-sm">Dueño: {mascotaToDelete?.dueno}</p>
+                </div>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
