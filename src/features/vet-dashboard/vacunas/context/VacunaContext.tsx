@@ -1,5 +1,5 @@
 import { createContext, useContext } from "react";
-import useVacunas from "../hooks/useVacunas";
+import { useVacunas } from "../hooks/useVacunas";
 
 const VacunaContext = createContext<ReturnType<typeof useVacunas> | undefined>(undefined);
 

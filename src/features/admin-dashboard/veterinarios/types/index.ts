@@ -1,36 +1,43 @@
-import { CreateResponse } from "@/src/lib/api/types";
 
-export interface RegisterRequest {
-  nombre: string;
-  correo: string;
-  password: string;
-  telefono: string;
-  dni: string;
-  direccion: string;
-}
-
-export interface User {
+export interface Veterinario {
   id: string;
-  nombre: string;
-  correo: string;
-  roles: string[];
-}
-
-export interface AuthResponse {
-  token: string;
-  tokenType: string;
-  expiresAt: string;
-  user: User;
-}
-
-export type VetIfoTable = {
-  id: string;
-  nombre: string;
-  correo: string;
-  telefono: string;
+  email: string;
+  name: string;
   dni: string;
-  activo: boolean;
-  cuentaNoBloqueada: boolean;
+  phone: string;
+  address: string;
+  latitude?: number;
+  longitude?: number;
+  active: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
-export type VetCreateResponse = CreateResponse<VetIfoTable>;
+export interface CreateVeterinarioRequest {
+  dni: string;
+  name: string;
+  email: string;
+  password?: string;
+  phone?: string;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
+  active?: boolean;
+}
+
+export interface UpdateVeterinarioRequest {
+  name?: string;
+  phone?: string;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
+  active?: boolean;
+}
+
+export interface VeterinarioResponse {
+  data: Veterinario;
+}
+
+export interface VeterinariosListResponse {
+  data: Veterinario[];
+}

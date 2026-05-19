@@ -1,13 +1,13 @@
 "use client";
 
-import React, { createContext, useContext } from "react";
-import useVet from "../hooks/useVet";
+import { createContext, useContext } from "react";
+import { useVeterinarios } from "../hooks/useVet";
 
-const VetContext = createContext<ReturnType<typeof useVet> | undefined>(undefined);
+const VetContext = createContext<ReturnType<typeof useVeterinarios> | undefined>(undefined);
 
 export const VetProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const vet = useVet();
-    return React.createElement(VetContext.Provider, { value: vet }, children);
+    const vet = useVeterinarios();
+    return <VetContext.Provider value={vet}>{children}</VetContext.Provider>;
 };
 
 export const useVetContext = () => {

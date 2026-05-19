@@ -33,40 +33,37 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { useMascotaContext } from "../context/MascotaContext"
-import { MascotaDetails } from "../types"
+import { useMascotas, useDeleteMascota } from "../hooks/useMascotas"
+import { Mascota } from "../types"
 import AddMascotaModal from "./AddMascotaModal"
 import EditMascotaModal from "./EditMascotaModal"
 import MascotaFilters from "./MascotaFilters"
 
 export default function MascotasList() {
   const router = useRouter()
-  const { mascotas, loading, getMascotas, deleteMascota } = useMascotaContext()
+  const { data: mascotas, isLoading: loading } = useMascotas()
+  const deleteMascotaMutation = useDeleteMascota()
+  
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [mascotaToDelete, setMascotaToDelete] = useState<MascotaDetails | null>(null)
+  const [mascotaToDelete, setMascotaToDelete] = useState<Mascota | null>(null)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  const [mascotaToEdit, setMascotaToEdit] = useState<MascotaDetails | null>(null)
+  const [mascotaToEdit, setMascotaToEdit] = useState<Mascota | null>(null)
   const [isMounted, setIsMounted] = useState(false)
+  const [filteredMascotas, setFilteredMascotas] = useState<Mascota[]>([])
 
   useEffect(() => {
     setIsMounted(true)
   }, [])
 
-  useEffect(() => {
-    if (isMounted) {
-      getMascotas()
-    }
-  }, [getMascotas, isMounted])
-
-  const handleDeleteClick = (mascota: MascotaDetails) => {
+  const handleDeleteClick = (mascota: Mascota) => {
     setMascotaToDelete(mascota)
     setIsDeleteDialogOpen(true)
   }
 
   const handleDeleteConfirm = async () => {
     if (mascotaToDelete) {
-      await deleteMascota(mascotaToDelete.id)
+      await deleteMascotaMutation.mutateAsync(mascotaToDelete.id)
       setIsDeleteDialogOpen(false)
       setMascotaToDelete(null)
     }
@@ -76,7 +73,7 @@ export default function MascotasList() {
     setIsAddModalOpen(true)
   }
 
-  const handleEditClick = (mascota: MascotaDetails) => {
+  const handleEditClick = (mascota: Mascota) => {
     setMascotaToEdit(mascota)
     setIsEditModalOpen(true)
   }
@@ -85,24 +82,12 @@ export default function MascotasList() {
     router.push(`/dashboard/veterinaria/mascotas/${mascotaId}`)
   }
 
-  const getEspecieColor = (especie: string) => {
-    const especieLower = especie?.toLowerCase() || ''
-    const colors = {
-      'perro': 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border-0',
-      'gato': 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 border-0',
-      'ave': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 border-0',
-      'conejo': 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border-0',
-      'hamster': 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-400 border-0',
-    }
-    return colors[especieLower as keyof typeof colors] || 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400 border-0'
+  const getSexoIcon = (gender: string) => {
+    return gender?.toLowerCase() === 'macho' ? '♂' : '♀'
   }
 
-  const getSexoIcon = (sexo: string) => {
-    return sexo?.toLowerCase() === 'macho' ? '♂' : '♀'
-  }
-
-  const getEspecieBadge = (especie: string) => {
-    const especieLower = especie?.toLowerCase() || ''
+  const getSpeciesBadge = (species: string) => {
+    const speciesLower = species?.toLowerCase() || ''
     const badges = {
       'perro': 'default' as const,
       'gato': 'secondary' as const,
@@ -110,7 +95,7 @@ export default function MascotasList() {
       'conejo': 'outline' as const,
       'hamster': 'outline' as const,
     }
-    return badges[especieLower as keyof typeof badges] || 'outline' as const
+    return badges[speciesLower as keyof typeof badges] || 'outline' as const
   }
 
   const LoadingSkeleton = () => (
@@ -151,12 +136,12 @@ export default function MascotasList() {
                   <TableHeader>
                     <TableRow className="bg-muted/50">
                       <TableHead>Nombre</TableHead>
-                      <TableHead>Identificador</TableHead>
                       <TableHead>Especie</TableHead>
                       <TableHead>Raza</TableHead>
                       <TableHead>Edad</TableHead>
                       <TableHead>Sexo</TableHead>
                       <TableHead>Temperamento</TableHead>
+                      <TableHead>Estado</TableHead>
                       <TableHead>Dueño</TableHead>
                       <TableHead>Acciones</TableHead>
                     </TableRow>
@@ -173,7 +158,8 @@ export default function MascotasList() {
     )
   }
 
-  const validMascotas = Array.isArray(mascotas) ? mascotas.filter(mascota => mascota && mascota.id) : []
+  const validMascotas = Array.isArray(mascotas) ? mascotas : []
+  const displayMascotas = filteredMascotas.length > 0 ? filteredMascotas : validMascotas
 
   return (
     <>
@@ -202,7 +188,7 @@ export default function MascotasList() {
 
             {/* Filtros - Segunda fila, ancho completo con separación */}
             <div className="w-full pt-2">
-              <MascotaFilters />
+              <MascotaFilters mascotas={validMascotas} onFilterChange={setFilteredMascotas} />
             </div>
           </CardHeader>
           
@@ -225,7 +211,7 @@ export default function MascotasList() {
                 <div className="min-w-0">
                   <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Perros</p>
                   <p className="text-xl font-bold">
-                    {validMascotas.filter(m => m.especie?.toLowerCase() === 'perro').length}
+                    {validMascotas.filter(m => m.species?.toLowerCase() === 'perro').length}
                   </p>
                 </div>
               </div>
@@ -236,7 +222,7 @@ export default function MascotasList() {
                 <div className="min-w-0">
                   <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Gatos</p>
                   <p className="text-xl font-bold">
-                    {validMascotas.filter(m => m.especie?.toLowerCase() === 'gato').length}
+                    {validMascotas.filter(m => m.species?.toLowerCase() === 'gato').length}
                   </p>
                 </div>
               </div>
@@ -249,12 +235,12 @@ export default function MascotasList() {
                   <TableHeader>
                     <TableRow className="bg-muted/50 hover:bg-muted/50">
                       <TableHead className="font-semibold w-[140px]">Nombre</TableHead>
-                      <TableHead className="font-semibold w-[110px]">Identificador</TableHead>
                       <TableHead className="font-semibold w-[90px]">Especie</TableHead>
                       <TableHead className="font-semibold w-[100px]">Raza</TableHead>
-                      <TableHead className="font-semibold w-[90px]">Edad</TableHead>
+                      <TableHead className="font-semibold w-[120px]">Edad</TableHead>
                       <TableHead className="font-semibold w-20">Sexo</TableHead>
                       <TableHead className="font-semibold w-[110px]">Temperamento</TableHead>
+                      <TableHead className="font-semibold w-[100px]">Estado</TableHead>
                       <TableHead className="font-semibold w-[140px]">Dueño</TableHead>
                       <TableHead className="font-semibold w-20">Acciones</TableHead>
                     </TableRow>
@@ -262,7 +248,7 @@ export default function MascotasList() {
                   <TableBody>
                     {loading ? (
                       <LoadingSkeleton />
-                    ) : validMascotas.length === 0 ? (
+                    ) : displayMascotas.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={9} className="h-64">
                           <div className="flex flex-col items-center justify-center text-center">
@@ -281,7 +267,7 @@ export default function MascotasList() {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      validMascotas.map((mascota) => (
+                      displayMascotas.map((mascota) => (
                         <TableRow 
                           key={mascota.id}
                           className="hover:bg-muted/40 transition-colors cursor-pointer"
@@ -292,38 +278,40 @@ export default function MascotasList() {
                               <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                                 <Heart className="h-3.5 w-3.5 text-primary" />
                               </div>
-                              <span className="truncate text-sm">{mascota.nombre || 'Sin nombre'}</span>
+                              <span className="truncate text-sm">{mascota.name || 'Sin nombre'}</span>
                             </div>
                           </TableCell>
-                          <TableCell className="text-xs truncate">
-                            {mascota.identificador || 'Sin ID'}
-                          </TableCell>
                           <TableCell>
-                            <Badge variant={getEspecieBadge(mascota.especie)} className="text-xs font-medium">
-                              {mascota.especie || 'N/A'}
+                            <Badge variant={getSpeciesBadge(mascota.species)} className="text-xs font-medium">
+                              {mascota.species || 'N/A'}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-sm truncate">
-                            {mascota.raza || 'Sin raza'}
+                            {mascota.race || 'Sin raza'}
                           </TableCell>
                           <TableCell className="text-sm">
-                            {mascota.edad || '-'}
+                            {mascota.years} años, {mascota.months} meses
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-1 text-sm">
-                              <span className="text-base">{getSexoIcon(mascota.sexo)}</span>
-                              <span>{mascota.sexo || 'N/A'}</span>
+                              <span className="text-base">{getSexoIcon(mascota.gender)}</span>
+                              <span>{mascota.gender || 'N/A'}</span>
                             </div>
                           </TableCell>
                           <TableCell>
                             <Badge variant="outline" className="text-xs truncate max-w-[100px]">
-                              {mascota.temperamento || 'N/A'}
+                              {mascota.temperament || 'N/A'}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-sm truncate" title={mascota.dueno}>
+                          <TableCell>
+                            <Badge variant="default" className="text-xs">
+                              {mascota.status || 'Activo'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-sm truncate" title={mascota.user?.name}>
                             <div className="flex items-center gap-1.5">
                               <Users className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                              <span className="truncate text-xs">{mascota.dueno || 'Sin dueño'}</span>
+                              <span className="truncate text-xs">{mascota.user?.name || 'Sin dueño'}</span>
                             </div>
                           </TableCell>
                           <TableCell onClick={(e) => e.stopPropagation()}>
@@ -373,12 +361,12 @@ export default function MascotasList() {
             </div>
 
             {/* Footer Info */}
-            {validMascotas.length > 0 && (
+            {displayMascotas.length > 0 && (
               <div className="mt-4 flex items-center justify-between gap-4 p-3 rounded-lg bg-muted/30 border">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Info className="h-4 w-4 shrink-0" />
                   <span>
-                    Mostrando <span className="font-medium text-foreground">{validMascotas.length}</span> mascota{validMascotas.length !== 1 ? 's' : ''}
+                    Mostrando <span className="font-medium text-foreground">{displayMascotas.length}</span> de {validMascotas.length} mascota{validMascotas.length !== 1 ? 's' : ''}
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground hidden sm:block">
@@ -410,13 +398,11 @@ export default function MascotasList() {
               ¿Estás seguro de eliminar esta mascota?
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
-              <div className="space-y-2">
-                <p>Esta acción no se puede deshacer. Se eliminará permanentemente:</p>
-                <div className="p-3 bg-muted rounded-lg space-y-1">
-                  <p className="font-semibold text-foreground">{mascotaToDelete?.nombre}</p>
-                  <p className="text-sm">Especie: {mascotaToDelete?.especie}</p>
-                  <p className="text-sm">Dueño: {mascotaToDelete?.dueno}</p>
-                </div>
+              <p>Esta acción no se puede deshacer. Se eliminará permanentemente:</p>
+              <div className="p-3 bg-muted rounded-lg space-y-1">
+                <p className="font-semibold text-foreground">{mascotaToDelete?.name}</p>
+                <p className="text-sm">Especie: {mascotaToDelete?.species}</p>
+                <p className="text-sm">Dueño: {mascotaToDelete?.user?.name}</p>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -425,8 +411,9 @@ export default function MascotasList() {
             <AlertDialogAction 
               onClick={handleDeleteConfirm}
               className="bg-destructive hover:bg-destructive/90"
+              disabled={deleteMascotaMutation.isPending}
             >
-              Eliminar definitivamente
+              {deleteMascotaMutation.isPending ? 'Eliminando...' : 'Eliminar definitivamente'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

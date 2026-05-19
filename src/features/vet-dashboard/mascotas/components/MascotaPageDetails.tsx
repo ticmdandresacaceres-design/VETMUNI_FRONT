@@ -2,14 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useMascotaContext } from '../context/MascotaContext';
+import { useMascota } from '../hooks/useMascotas';
+import { useVacunasPorMascota } from '../../vacunas/hooks/useVacunas';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { 
     ArrowLeft, Phone, Mail, User, PawPrint, Camera, 
-    Shield, Calendar, Plus, Syringe, Clock, X, ChevronLeft, ChevronRight 
+    Shield, Calendar, Plus, Syringe, Clock, ChevronLeft, ChevronRight 
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import AddImagenModal from './AddImagenModal';
@@ -20,19 +21,22 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { formatDate } from "@/src/lib/utils/utils";
 
 function MascotaPageDetails() {
     const router = useRouter();
     const { id } = useParams();
-    const { mascotaPage, loading, getMascotaPage } = useMascotaContext();
+    const mascotaId = typeof id === 'string' ? id : '';
+    
+    const { data: mascota, isLoading: isMascotaLoading } = useMascota(mascotaId);
+    const { data: vacunas, isLoading: isVacunasLoading } = useVacunasPorMascota(mascotaId);
+    
     const [isAddImageModalOpen, setIsAddImageModalOpen] = useState(false);
     const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
 
-    useEffect(() => {
-        if (id && typeof id === 'string') {
-            getMascotaPage(id);
-        }
-    }, [id, getMascotaPage]);
+    // Nota: El tipo Mascota debería incluir images si vienen del backend
+    // Por ahora usaremos un array vacío si no existe
+    const imagenList = (mascota as any)?.images || [];
 
     const handleOpenAddImageModal = () => {
         setIsAddImageModalOpen(true);
@@ -51,17 +55,17 @@ function MascotaPageDetails() {
     };
 
     const handlePreviousImage = () => {
-        if (selectedImageIndex !== null && mascotaPage?.imagenList) {
+        if (selectedImageIndex !== null && imagenList.length > 0) {
             const newIndex = selectedImageIndex === 0 
-                ? mascotaPage.imagenList.length - 1 
+                ? imagenList.length - 1 
                 : selectedImageIndex - 1;
             setSelectedImageIndex(newIndex);
         }
     };
 
     const handleNextImage = () => {
-        if (selectedImageIndex !== null && mascotaPage?.imagenList) {
-            const newIndex = selectedImageIndex === mascotaPage.imagenList.length - 1 
+        if (selectedImageIndex !== null && imagenList.length > 0) {
+            const newIndex = selectedImageIndex === imagenList.length - 1 
                 ? 0 
                 : selectedImageIndex + 1;
             setSelectedImageIndex(newIndex);
@@ -84,13 +88,13 @@ function MascotaPageDetails() {
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [selectedImageIndex, mascotaPage?.imagenList]);
+    }, [selectedImageIndex, imagenList]);
 
-    if (loading) {
+    if (isMascotaLoading) {
         return <MascotaPageDetailsSkeleton />;
     }
 
-    if (!mascotaPage) {
+    if (!mascota) {
         return (
             <div className="max-w-6xl mx-auto p-6">
                 <Card className="border-dashed">
@@ -112,21 +116,18 @@ function MascotaPageDetails() {
     }
 
     const { 
-        id: mascotaId,
-        nombre, 
-        especie, 
-        raza, 
-        edad, 
-        sexo, 
+        name, 
+        species, 
+        race, 
+        years, 
+        months,
+        gender, 
         color, 
-        identificador, 
-        fotoUrl, 
-        estado,
-        imagenList,
-        dueno,
-        vacuna,
-        createdAt,
-    } = mascotaPage;
+        id: identificador, 
+        status: estado,
+        user: dueno,
+        created_at: createdAt,
+    } = mascota;
 
     const currentImage = selectedImageIndex !== null ? imagenList[selectedImageIndex] : null;
 
@@ -150,12 +151,12 @@ function MascotaPageDetails() {
                 </div>
                 <div className="flex items-center gap-3">
                     <GeneratePDFButton 
-                        mascotaData={mascotaPage} 
+                        mascotaData={mascota} 
                         variant="outline" 
                         size="sm" 
                     />
                     <Badge 
-                        variant={estado === 'ACTIVO' ? 'default' : 'secondary'}
+                        variant={estado === 'Activo' ? 'default' : 'secondary'}
                         className="px-3 py-1 text-sm"
                     >
                         {estado}
@@ -172,29 +173,29 @@ function MascotaPageDetails() {
                         <CardContent className="p-0">
                             <div className="bg-muted/30 p-6 flex flex-col items-center text-center border-b">
                                 <Avatar className="w-32 h-32 border-4 border-background shadow-md mb-4">
-                                    <AvatarImage src={fotoUrl} alt={nombre} className="object-cover" />
+                                    <AvatarImage src={(mascota as any).image_url} alt={name} className="object-cover" />
                                     <AvatarFallback className="bg-primary/10 text-primary">
                                         <PawPrint className="w-12 h-12" />
                                     </AvatarFallback>
                                 </Avatar>
-                                <h2 className="text-2xl font-bold text-foreground">{nombre}</h2>
+                                <h2 className="text-2xl font-bold text-foreground">{name}</h2>
                                 <div className="flex items-center gap-2 mt-2 text-sm font-medium text-muted-foreground">
                                     <Badge variant="secondary" className="rounded-full font-normal">
-                                        {especie}
+                                        {species}
                                     </Badge>
                                     <span>•</span>
-                                    <span>{raza}</span>
+                                    <span>{race}</span>
                                 </div>
                             </div>
                             
                             <div className="p-6 grid grid-cols-2 gap-y-6 gap-x-4">
                                 <div className="space-y-1">
                                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Edad</p>
-                                    <p className="font-semibold">{edad}</p>
+                                    <p className="font-semibold">{years} años, {months} meses</p>
                                 </div>
                                 <div className="space-y-1">
                                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Sexo</p>
-                                    <p className="font-semibold">{sexo}</p>
+                                    <p className="font-semibold">{gender}</p>
                                 </div>
                                 <div className="space-y-1">
                                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Color</p>
@@ -202,14 +203,14 @@ function MascotaPageDetails() {
                                 </div>
                                 <div className="space-y-1">
                                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">ID Sistema</p>
-                                    <p className="font-mono text-sm bg-muted px-2 py-0.5 rounded-md inline-block">{identificador}</p>
+                                    <p className="font-mono text-xs bg-muted px-2 py-0.5 rounded-md inline-block truncate w-full">{identificador}</p>
                                 </div>
                             </div>
                             
                             <div className="px-6 pb-6 pt-0">
                                 <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground bg-muted/50 p-2 rounded-lg">
                                     <Calendar className="w-3 h-3" />
-                                    <span>Registrado: {createdAt}</span>
+                                    <span>Registrado: {createdAt ? formatDate(createdAt) : 'N/A'}</span>
                                 </div>
                             </div>
                         </CardContent>
@@ -224,33 +225,39 @@ function MascotaPageDetails() {
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/40">
-                                <div className="bg-background p-2 rounded-full shadow-xs">
-                                    <User className="w-4 h-4 text-muted-foreground" />
-                                </div>
-                                <div>
-                                    <p className="text-xs text-muted-foreground">Nombre</p>
-                                    <p className="font-medium text-sm">{dueno.nombre}</p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/40">
-                                <div className="bg-background p-2 rounded-full shadow-xs">
-                                    <Phone className="w-4 h-4 text-muted-foreground" />
-                                </div>
-                                <div>
-                                    <p className="text-xs text-muted-foreground">Teléfono</p>
-                                    <p className="font-medium text-sm">{dueno.telefono}</p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/40">
-                                <div className="bg-background p-2 rounded-full shadow-xs">
-                                    <Mail className="w-4 h-4 text-muted-foreground" />
-                                </div>
-                                <div className="overflow-hidden">
-                                    <p className="text-xs text-muted-foreground">Correo</p>
-                                    <p className="font-medium text-sm truncate" title={dueno.correo}>{dueno.correo}</p>
-                                </div>
-                            </div>
+                            {dueno ? (
+                                <>
+                                    <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/40">
+                                        <div className="bg-background p-2 rounded-full shadow-xs">
+                                            <User className="w-4 h-4 text-muted-foreground" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-muted-foreground">Nombre</p>
+                                            <p className="font-medium text-sm">{dueno.name}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/40">
+                                        <div className="bg-background p-2 rounded-full shadow-xs">
+                                            <Phone className="w-4 h-4 text-muted-foreground" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-muted-foreground">Teléfono</p>
+                                            <p className="font-medium text-sm">{dueno.phone || 'N/A'}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/40">
+                                        <div className="bg-background p-2 rounded-full shadow-xs">
+                                            <Mail className="w-4 h-4 text-muted-foreground" />
+                                        </div>
+                                        <div className="overflow-hidden">
+                                            <p className="text-xs text-muted-foreground">Correo</p>
+                                            <p className="font-medium text-sm truncate" title={dueno.email}>{dueno.email}</p>
+                                        </div>
+                                    </div>
+                                </>
+                            ) : (
+                                <p className="text-sm text-muted-foreground text-center py-4">Información del dueño no disponible</p>
+                            )}
                         </CardContent>
                     </Card>
                 </div>
@@ -273,14 +280,18 @@ function MascotaPageDetails() {
                                 </div>
                                 <Badge variant="outline" className="h-8 px-3 text-sm gap-1 bg-background">
                                     <Syringe className="w-3.5 h-3.5" />
-                                    {vacuna.totalVacunas} Registradas
+                                    {vacunas?.length || 0} Registradas
                                 </Badge>
                             </div>
                         </CardHeader>
                         <CardContent className="p-6">
-                            {vacuna.vacunaslist.length > 0 ? (
+                            {isVacunasLoading ? (
                                 <div className="grid sm:grid-cols-2 gap-4">
-                                    {vacuna.vacunaslist.map((vacunaItem) => (
+                                    {[1, 2].map(i => <Skeleton key={i} className="h-24 w-full rounded-xl" />)}
+                                </div>
+                            ) : vacunas && vacunas.length > 0 ? (
+                                <div className="grid sm:grid-cols-2 gap-4">
+                                    {vacunas.map((vacunaItem) => (
                                         <div 
                                             key={vacunaItem.id} 
                                             className="group relative flex flex-col justify-between p-4 rounded-xl border bg-card hover:border-primary/50 hover:shadow-md transition-all duration-200"
@@ -291,7 +302,7 @@ function MascotaPageDetails() {
                                                         <Syringe className="w-5 h-5" />
                                                     </div>
                                                     <div>
-                                                        <h4 className="font-semibold text-base leading-none mb-1">{vacunaItem.tipo}</h4>
+                                                        <h4 className="font-semibold text-base leading-none mb-1">{vacunaItem.type}</h4>
                                                         <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
                                                             Aplicada
                                                         </Badge>
@@ -304,13 +315,13 @@ function MascotaPageDetails() {
                                                     <span className="text-muted-foreground flex items-center gap-1.5">
                                                         <Calendar className="w-3.5 h-3.5" /> Aplicación
                                                     </span>
-                                                    <span className="font-medium">{vacunaItem.fechaAplicacion}</span>
+                                                    <span className="font-medium">{formatDate(vacunaItem.aplication_date)}</span>
                                                 </div>
                                                 <div className="flex items-center justify-between text-sm">
                                                     <span className="text-muted-foreground flex items-center gap-1.5">
                                                         <Clock className="w-3.5 h-3.5" /> Vencimiento
                                                     </span>
-                                                    <span className="font-medium text-primary">{vacunaItem.fechaVencimiento}</span>
+                                                    <span className="font-medium text-primary">{formatDate(vacunaItem.expiration_date)}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -352,7 +363,7 @@ function MascotaPageDetails() {
                         <CardContent>
                             {imagenList.length > 0 ? (
                                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                                    {imagenList.map((imagen, index) => (
+                                    {imagenList.map((imagen: any, index: number) => (
                                         <div 
                                             key={imagen.id} 
                                             className="group relative aspect-square rounded-xl overflow-hidden bg-muted border shadow-xs cursor-pointer"
@@ -360,12 +371,12 @@ function MascotaPageDetails() {
                                         >
                                             <img 
                                                 src={imagen.url} 
-                                                alt={imagen.descripcion}
+                                                alt={imagen.description || "Imagen de mascota"}
                                                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                                             />
                                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                                 <p className="text-white text-xs font-medium px-2 text-center truncate w-full">
-                                                    {imagen.descripcion || "Sin descripción"}
+                                                    {imagen.description || "Sin descripción"}
                                                 </p>
                                             </div>
                                         </div>
@@ -395,7 +406,7 @@ function MascotaPageDetails() {
                 isOpen={isAddImageModalOpen}
                 onClose={handleCloseAddImageModal}
                 mascotaId={mascotaId}
-                mascotaNombre={nombre}
+                mascotaNombre={name}
             />
 
             {/* Image Viewer Modal - Simplified */}
@@ -403,7 +414,7 @@ function MascotaPageDetails() {
                 <DialogContent className="max-w-4xl p-0 gap-0">
                     <VisuallyHidden>
                         <DialogTitle>
-                            {currentImage?.descripcion || "Visor de imagen"}
+                            {currentImage?.description || "Visor de imagen"}
                         </DialogTitle>
                     </VisuallyHidden>
                     
@@ -413,7 +424,7 @@ function MascotaPageDetails() {
                             <div className="flex items-start justify-between p-4 border-b">
                                 <div className="flex-1 min-w-0">
                                     <h3 className="font-semibold text-lg truncate">
-                                        {currentImage.descripcion || "Sin descripción"}
+                                        {currentImage.description || "Sin descripción"}
                                     </h3>
                                     <p className="text-sm text-muted-foreground">
                                         Imagen {(selectedImageIndex ?? 0) + 1} de {imagenList.length}
@@ -426,7 +437,7 @@ function MascotaPageDetails() {
                             <div className="relative bg-black/5 dark:bg-black/20">
                                 <img
                                     src={currentImage.url}
-                                    alt={currentImage.descripcion}
+                                    alt={currentImage.description || "Imagen de mascota"}
                                     className="w-full h-auto max-h-[70vh] object-contain"
                                 />
 

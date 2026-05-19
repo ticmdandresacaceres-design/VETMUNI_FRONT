@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { AuthState, LoginRequest, User } from '../types';
 import * as AuthService from '../service/AuthService';
 import { tokenStorage } from '@/src/lib/api/token-storage';
-import { ApiError } from '@/src/lib/api/axios';
 
 export const useAuth = () => {
     const [authState, setAuthState] = useState<AuthState>({
@@ -17,7 +16,7 @@ export const useAuth = () => {
         const initializeAuth = () => {
             const token = tokenStorage.getToken();
             const user = tokenStorage.getUser();
-            
+
             setAuthState({
                 user,
                 token,
@@ -32,12 +31,12 @@ export const useAuth = () => {
     // Función de login - SOLO maneja la sesión
     const login = useCallback(async (credentials: LoginRequest) => {
         setAuthState(prev => ({ ...prev, isLoading: true }));
-        
+
         try {
             const response = await AuthService.login(credentials);
-            
+
             setAuthState({
-                user: response.user,
+                user: response.user.name ? response.user : null,
                 token: response.token,
                 isAuthenticated: true,
                 isLoading: false
@@ -45,11 +44,11 @@ export const useAuth = () => {
 
             return response;
         } catch (error) {
-            setAuthState(prev => ({ 
-                ...prev, 
-                isLoading: false 
+            setAuthState(prev => ({
+                ...prev,
+                isLoading: false
             }));
-            
+
             throw error;
         }
     }, []);
@@ -57,10 +56,10 @@ export const useAuth = () => {
     // Función de logout
     const logout = useCallback(async () => {
         setAuthState(prev => ({ ...prev, isLoading: true }));
-        
+
         try {
             await AuthService.logout();
-            
+
             setAuthState({
                 user: null,
                 token: null,
@@ -80,7 +79,7 @@ export const useAuth = () => {
 
     // Función para verificar si el usuario tiene un rol específico
     const hasRole = useCallback((role: string): boolean => {
-        return authState.user?.roles?.includes(role) || false;
+        return authState.user?.role?.includes(role) || false;
     }, [authState.user]);
 
     // Función para verificar si el usuario tiene alguno de los roles especificados
@@ -101,7 +100,7 @@ export const useAuth = () => {
     return {
         // Estado
         ...authState,
-        
+
         // Funciones
         login,
         logout,
@@ -115,7 +114,7 @@ export const useAuth = () => {
 // Hook para verificar roles específicos
 export const useRequireAuth = (requiredRoles?: string[]) => {
     const auth = useAuth();
-    
+
     const canAccess = useCallback(() => {
         if (!auth.isAuthenticated) return false;
         if (!requiredRoles || requiredRoles.length === 0) return true;

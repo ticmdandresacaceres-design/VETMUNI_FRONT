@@ -1,9 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useDuenoContext } from '../context/DuenoContext';
-import { DuenoFullDetails } from '../types';
+import { useDueno } from '../hooks/useDuenos';
+import { useMascotas } from '../../mascotas/hooks/useMascotas';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -18,24 +17,18 @@ import DuenoLocationMap from './DuenoLocationMap';
 function DuenoPageDetails() {
     const router = useRouter();
     const { id } = useParams();
-    const { getDuenoDetails, loading } = useDuenoContext();
-    const [duenoDetails, setDuenoDetails] = useState<DuenoFullDetails | null>(null);
+    const duenoId = typeof id === 'string' ? id : '';
+    
+    const { data: dueno, isLoading: isDuenoLoading } = useDueno(duenoId);
+    const { data: allMascotas, isLoading: isMascotasLoading } = useMascotas();
 
-    useEffect(() => {
-        if (id && typeof id === 'string') {
-            const loadDuenoDetails = async () => {
-                const details = await getDuenoDetails(id);
-                setDuenoDetails(details);
-            };
-            loadDuenoDetails();
-        }
-    }, [id, getDuenoDetails]);
+    const loading = isDuenoLoading || isMascotasLoading;
 
     if (loading) {
         return <DuenoPageDetailsSkeleton />;
     }
 
-    if (!duenoDetails) {
+    if (!dueno) {
         return (
             <div className="max-w-6xl mx-auto p-6">
                 <Card className="border-dashed">
@@ -57,15 +50,16 @@ function DuenoPageDetails() {
     }
 
     const { 
-        nombre, 
+        name, 
         dni, 
-        direccion, 
-        telefono, 
-        correo, 
-        longitud, 
-        latitud,
-        mascota
-    } = duenoDetails;
+        address, 
+        phone, 
+        email, 
+        longitude, 
+        latitude,
+    } = dueno;
+
+    const myMascotas = allMascotas?.filter(m => m.user_id === duenoId) || [];
 
     return (
         <div className="max-w-7xl mx-auto space-y-6 p-6 animate-in fade-in duration-500">
@@ -101,10 +95,10 @@ function DuenoPageDetails() {
                             <div className="bg-muted/30 p-6 flex flex-col items-center text-center border-b">
                                 <Avatar className="w-32 h-32 border-4 border-background shadow-md mb-4">
                                     <AvatarFallback className="bg-primary/10 text-primary text-4xl font-bold">
-                                        {nombre.charAt(0).toUpperCase()}
+                                        {name.charAt(0).toUpperCase()}
                                     </AvatarFallback>
                                 </Avatar>
-                                <h2 className="text-2xl font-bold text-foreground">{nombre}</h2>
+                                <h2 className="text-2xl font-bold text-foreground">{name}</h2>
                                 <p className="text-sm text-muted-foreground mt-1">Dueño Registrado</p>
                             </div>
                             
@@ -115,7 +109,7 @@ function DuenoPageDetails() {
                                     </div>
                                     <div className="overflow-hidden">
                                         <p className="text-xs text-muted-foreground">Teléfono</p>
-                                        <p className="font-medium text-sm truncate">{telefono}</p>
+                                        <p className="font-medium text-sm truncate">{phone}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/40">
@@ -124,7 +118,7 @@ function DuenoPageDetails() {
                                     </div>
                                     <div className="overflow-hidden">
                                         <p className="text-xs text-muted-foreground">Correo Electrónico</p>
-                                        <p className="font-medium text-sm truncate" title={correo}>{correo}</p>
+                                        <p className="font-medium text-sm truncate" title={email}>{email}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/40">
@@ -133,7 +127,7 @@ function DuenoPageDetails() {
                                     </div>
                                     <div className="overflow-hidden">
                                         <p className="text-xs text-muted-foreground">Dirección</p>
-                                        <p className="font-medium text-sm truncate" title={direccion}>{direccion}</p>
+                                        <p className="font-medium text-sm truncate" title={address}>{address}</p>
                                     </div>
                                 </div>
                             </div>
@@ -151,26 +145,26 @@ function DuenoPageDetails() {
                         <CardContent className="space-y-4">
                             <div className="flex items-center justify-between p-4 rounded-xl bg-primary/10 border border-primary/20">
                                 <span className="text-sm font-medium">Total Registradas</span>
-                                <Badge className="text-base px-3 py-1">{mascota.cantidadMascotas}</Badge>
+                                <Badge className="text-base px-3 py-1">{myMascotas.length}</Badge>
                             </div>
                             <div className="grid grid-cols-3 gap-3 pt-2">
                                 <div className="p-3 rounded-lg bg-muted/40 border text-center">
                                     <p className="text-xs text-muted-foreground mb-1">Perros</p>
                                     <p className="font-bold text-xl text-primary">
-                                        {mascota.mascotasList.filter(pet => pet.especie.toLowerCase() === 'perro').length}
+                                        {myMascotas.filter(pet => pet.species.toLowerCase() === 'perro').length}
                                     </p>
                                 </div>
                                 <div className="p-3 rounded-lg bg-muted/40 border text-center">
                                     <p className="text-xs text-muted-foreground mb-1">Gatos</p>
                                     <p className="font-bold text-xl text-primary">
-                                        {mascota.mascotasList.filter(pet => pet.especie.toLowerCase() === 'gato').length}
+                                        {myMascotas.filter(pet => pet.species.toLowerCase() === 'gato').length}
                                     </p>
                                 </div>
                                 <div className="p-3 rounded-lg bg-muted/40 border text-center">
                                     <p className="text-xs text-muted-foreground mb-1">Otros</p>
                                     <p className="font-bold text-xl text-primary">
-                                        {mascota.mascotasList.filter(pet => 
-                                            !['perro', 'gato'].includes(pet.especie.toLowerCase())
+                                        {myMascotas.filter(pet => 
+                                            !['perro', 'gato'].includes(pet.species.toLowerCase())
                                         ).length}
                                     </p>
                                 </div>
@@ -197,16 +191,16 @@ function DuenoPageDetails() {
                                 </div>
                                 <div className="flex items-center gap-2 text-xs text-muted-foreground bg-background px-3 py-2 rounded-full border">
                                     <Navigation className="w-3.5 h-3.5" />
-                                    <span className="font-mono">{Number(latitud).toFixed(4)}, {Number(longitud).toFixed(4)}</span>
+                                    <span className="font-mono">{latitude ? Number(latitude).toFixed(4) : '0.0000'}, {longitude ? Number(longitude).toFixed(4) : '0.0000'}</span>
                                 </div>
                             </div>
                         </CardHeader>
                         <CardContent className="p-0">
                             <DuenoLocationMap
-                                latitud={latitud}
-                                longitud={longitud}
-                                nombre={nombre}
-                                direccion={direccion}
+                                latitud={latitude ? Number(latitude) : 0}
+                                longitud={longitude ? Number(longitude) : 0}
+                                nombre={name}
+                                direccion={address}
                                 className="h-[400px] w-full"
                             />
                             <div className="p-4 bg-muted/10 border-t">
@@ -216,7 +210,7 @@ function DuenoPageDetails() {
                                     </div>
                                     <div>
                                         <p className="text-xs font-medium text-muted-foreground mb-1">Dirección Completa</p>
-                                        <p className="text-sm font-medium text-foreground">{direccion}</p>
+                                        <p className="text-sm font-medium text-foreground">{address}</p>
                                     </div>
                                 </div>
                             </div>
@@ -235,9 +229,9 @@ function DuenoPageDetails() {
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            {mascota.mascotasList.length > 0 ? (
+                            {myMascotas.length > 0 ? (
                                 <div className="grid sm:grid-cols-2 gap-4">
-                                    {mascota.mascotasList.map((pet) => (
+                                    {myMascotas.map((pet) => (
                                         <div 
                                             key={pet.id} 
                                             className="group flex items-start gap-4 p-4 rounded-xl border bg-card hover:border-primary/50 hover:shadow-sm transition-all duration-200"
@@ -249,18 +243,18 @@ function DuenoPageDetails() {
                                             </Avatar>
                                             <div className="flex-1 min-w-0 space-y-2">
                                                 <div className="flex items-center justify-between gap-2">
-                                                    <h4 className="font-semibold text-base truncate">{pet.nombre}</h4>
+                                                    <h4 className="font-semibold text-base truncate">{pet.name}</h4>
                                                     <Badge variant="secondary" className="text-[10px] h-5 px-2 capitalize shrink-0">
-                                                        {pet.especie}
+                                                        {pet.species}
                                                     </Badge>
                                                 </div>
                                                 <p className="text-sm text-muted-foreground truncate">
-                                                    {pet.raza}
+                                                    {pet.race}
                                                 </p>
                                                 <div className="flex items-center gap-3 text-xs">
                                                     <span className="flex items-center gap-1.5 text-muted-foreground">
-                                                        <span className={`w-2 h-2 rounded-full ${pet.sexo === 'MACHO' ? 'bg-blue-500' : 'bg-pink-500'}`}></span>
-                                                        {pet.sexo}
+                                                        <span className={`w-2 h-2 rounded-full ${pet.gender === 'MACHO' ? 'bg-blue-500' : 'bg-pink-500'}`}></span>
+                                                        {pet.gender}
                                                     </span>
                                                 </div>
                                             </div>

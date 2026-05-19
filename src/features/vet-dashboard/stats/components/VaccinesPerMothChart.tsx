@@ -1,43 +1,25 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { BarChart, Bar, XAxis, YAxis } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { Badge } from '@/components/ui/badge';
-import { VacunaPorMes } from '../types/Index';
+import { MonthlyActivity } from '../types';
 
 interface VaccinesPerMonthChartProps {
-    data: VacunaPorMes[];
+    data: MonthlyActivity[];
 }
 
 const chartConfig = {
-    total: {
+    vaccines_applied: {
         label: 'Vacunas',
         color: 'hsl(142, 76%, 36%)',
     },
 } satisfies ChartConfig;
 
-const monthsInSpanish = {
-    JANUARY: 'Ene', FEBRUARY: 'Feb', MARCH: 'Mar', APRIL: 'Abr',
-    MAY: 'May', JUNE: 'Jun', JULY: 'Jul', AUGUST: 'Ago',
-    SEPTEMBER: 'Sep', OCTOBER: 'Oct', NOVEMBER: 'Nov', DECEMBER: 'Dic',
-};
-
 export function VaccinesPerMonthChart({ data }: VaccinesPerMonthChartProps) {
-    const monthOrder = [
-        'JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE',
-        'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'
-    ];
-
-    const sortedData = data
-        .sort((a, b) => monthOrder.indexOf(a.mes) - monthOrder.indexOf(b.mes))
-        .map(item => ({
-            ...item,
-            mesCorto: monthsInSpanish[item.mes as keyof typeof monthsInSpanish] || item.mes,
-        }));
-
-    const totalVacunas = data.reduce((sum, item) => sum + item.total, 0);
-    const mesConMasVacunas = data.reduce((prev, current) => 
-        prev.total > current.total ? prev : current
-    );
+    const totalVaccines = data.reduce((sum, item) => sum + item.vaccines_applied, 0);
+    const busiestMonth = data.length > 0 
+        ? data.reduce((prev, current) => prev.vaccines_applied > current.vaccines_applied ? prev : current)
+        : null;
 
     return (
         <Card>
@@ -49,13 +31,14 @@ export function VaccinesPerMonthChart({ data }: VaccinesPerMonthChartProps) {
             </CardHeader>
             <CardContent className="pb-4">
                 <ChartContainer config={chartConfig} className="min-h-40">
-                    <BarChart data={sortedData}>
+                    <BarChart data={data}>
+                        <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.3} />
                         <ChartTooltip
                             cursor={false}
                             content={<ChartTooltipContent indicator="dashed" />}
                         />
                         <XAxis 
-                            dataKey="mesCorto"
+                            dataKey="month"
                             tickLine={false}
                             tickMargin={8}
                             axisLine={false}
@@ -68,19 +51,19 @@ export function VaccinesPerMonthChart({ data }: VaccinesPerMonthChartProps) {
                             fontSize={10}
                         />
                         <Bar 
-                            dataKey="total" 
+                            dataKey="vaccines_applied" 
                             fill="hsl(142, 76%, 36%)"
-                            radius={3}
+                            radius={4}
                         />
                     </BarChart>
                 </ChartContainer>
                 <div className="flex flex-wrap gap-1 mt-3">
                     <Badge variant="secondary" className="text-xs">
-                        Total: {totalVacunas}
+                        Total: {totalVaccines}
                     </Badge>
-                    {totalVacunas > 0 && (
+                    {busiestMonth && busiestMonth.vaccines_applied > 0 && (
                         <Badge variant="outline" className="text-xs">
-                            Pico: {monthsInSpanish[mesConMasVacunas.mes as keyof typeof monthsInSpanish]} ({mesConMasVacunas.total})
+                            Pico: {busiestMonth.month} ({busiestMonth.vaccines_applied})
                         </Badge>
                     )}
                 </div>

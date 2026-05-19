@@ -5,9 +5,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Upload, X, Image as ImageIcon } from "lucide-react";
-import { useMascotaContext } from "../context/MascotaContext";
+import { useUploadPetImage } from "../hooks/useMascotas";
 
 interface AddImagenModalProps {
     isOpen: boolean;
@@ -23,34 +22,26 @@ const AddImagenModal: React.FC<AddImagenModalProps> = ({
     mascotaNombre = "esta mascota"
 }) => {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const [descripcion, setDescripcion] = useState("");
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [isDragOver, setIsDragOver] = useState(false);
+    const uploadImageMutation = useUploadPetImage();
 
-    const { uploadMascotaImage, loading } = useMascotaContext();
-
-    // Manejar selección de archivo
     const handleFileSelect = (file: File) => {
-        // Validar tipo de archivo
         if (!file.type.startsWith('image/')) {
             alert('Por favor selecciona un archivo de imagen válido');
             return;
         }
 
-        // Validar tamaño (máximo 5MB)
         if (file.size > 5 * 1024 * 1024) {
             alert('El archivo debe ser menor a 5MB');
             return;
         }
 
         setSelectedFile(file);
-        
-        // Crear preview
         const url = URL.createObjectURL(file);
         setPreviewUrl(url);
     };
 
-    // Manejar input de archivo
     const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
@@ -58,7 +49,6 @@ const AddImagenModal: React.FC<AddImagenModalProps> = ({
         }
     };
 
-    // Manejar drag and drop
     const handleDragOver = (e: React.DragEvent) => {
         e.preventDefault();
         setIsDragOver(true);
@@ -72,14 +62,12 @@ const AddImagenModal: React.FC<AddImagenModalProps> = ({
     const handleDrop = (e: React.DragEvent) => {
         e.preventDefault();
         setIsDragOver(false);
-        
         const files = Array.from(e.dataTransfer.files);
         if (files.length > 0) {
             handleFileSelect(files[0]);
         }
     };
 
-    // Limpiar archivo seleccionado
     const clearSelectedFile = () => {
         setSelectedFile(null);
         if (previewUrl) {
@@ -88,30 +76,23 @@ const AddImagenModal: React.FC<AddImagenModalProps> = ({
         }
     };
 
-    // Manejar envío del formulario
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
-        if (!selectedFile || !descripcion.trim()) {
-            alert('Por favor completa todos los campos');
+        if (!selectedFile) {
+            alert('Por favor selecciona una imagen');
             return;
         }
 
         try {
-            const success = await uploadMascotaImage(selectedFile, descripcion, mascotaId);
-            
-            if (success) {
-                handleClose();
-            }
+            await uploadImageMutation.mutateAsync({ petId: mascotaId, image: selectedFile });
+            handleClose();
         } catch (error) {
             console.error('Error al subir imagen:', error);
         }
     };
 
-    // Cerrar modal y limpiar estado
     const handleClose = () => {
         clearSelectedFile();
-        setDescripcion("");
         onClose();
     };
 
@@ -126,7 +107,6 @@ const AddImagenModal: React.FC<AddImagenModalProps> = ({
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    {/* Área de drop */}
                     <div className="space-y-2">
                         <Label>Imagen</Label>
                         <div
@@ -194,39 +174,22 @@ const AddImagenModal: React.FC<AddImagenModalProps> = ({
                         )}
                     </div>
 
-                    {/* Descripción */}
-                    <div className="space-y-2">
-                        <Label htmlFor="descripcion">Descripción</Label>
-                        <Textarea
-                            id="descripcion"
-                            value={descripcion}
-                            onChange={(e) => setDescripcion(e.target.value)}
-                            placeholder="Describe la imagen..."
-                            rows={3}
-                            maxLength={500}
-                        />
-                        <div className="text-xs text-gray-500 text-right">
-                            {descripcion.length}/500
-                        </div>
-                    </div>
-
-                    {/* Botones */}
                     <div className="flex gap-2 pt-4">
                         <Button
                             type="button"
                             variant="outline"
                             onClick={handleClose}
                             className="flex-1"
-                            disabled={loading}
+                            disabled={uploadImageMutation.isPending}
                         >
                             Cancelar
                         </Button>
                         <Button
                             type="submit"
                             className="flex-1"
-                            disabled={!selectedFile || !descripcion.trim() || loading}
+                            disabled={!selectedFile || uploadImageMutation.isPending}
                         >
-                            {loading ? (
+                            {uploadImageMutation.isPending ? (
                                 <>
                                     <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                                     Subiendo...

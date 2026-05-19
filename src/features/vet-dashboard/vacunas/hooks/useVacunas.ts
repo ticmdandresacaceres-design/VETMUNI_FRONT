@@ -1,220 +1,87 @@
-import { useState, useCallback } from 'react';
-import { findAll, findById, create, filterByType, findByDateRange, update, remove } from '../service/VacunaService';
-import { VacunaDetails, VacunaNewRequest, VacunaCreateResponse, VacunaUpdateRequest } from '../types';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import * as VacunaService from "../service/VacunaService";
+import { CreateVacunaRequest, UpdateVacunaRequest } from "../types";
 import { toast } from "sonner";
 
-// Definición de la interfaz para el hook useVacunas
-interface UseVacunasReturn {
-    vacunas: VacunaDetails[];
-    loading: boolean;
-    error: string | null;
-    getVacunas: () => Promise<void>;
-    getVacunaById: (id: string) => Promise<VacunaDetails | null>;
-    createVacuna: (payload: VacunaNewRequest) => Promise<boolean>;
-    updateVacuna: (id: string, payload: VacunaUpdateRequest) => Promise<boolean>;
-    deleteVacuna: (id: string) => Promise<boolean>;
-    filterVacunasByType: (type: string) => Promise<void>;
-    filterVacunasByDateRange: (startDate: string, endDate: string) => Promise<void>;
-    clearError: () => void;
-    getMascotaNames: () => string[];
-}
-
-function getErrorMessage(error: unknown): string {
-    if (error instanceof Error) return error.message;
-    if (typeof error === 'string') return error;
-    return 'Ocurrió un error inesperado';
-}
-
-const useVacunas = (): UseVacunasReturn => {
-
-    // Estado para vacunas, carga y errores
-    const [vacunas, setVacunas] = useState<VacunaDetails[]>([]);
-    const [loading, setLoading] = useState<boolean>(false);
-    const [error, setError] = useState<string | null>(null);
-
-    // Función para limpiar errores
-    const clearError = useCallback(() => {
-        setError(null);
-    }, []);
-
-    // función para obtener nombres de mascotas únicas
-    const getMascotaNames = useCallback((): string[] => {
-        const mascotasUnicas = Array.from(new Set(vacunas.map(vacuna => vacuna.mascota)));
-        return mascotasUnicas.filter(nombre => nombre && nombre.trim() !== '');
-    }, [vacunas]);
-
-    // Obtener todas las vacunas
-    const getVacunas = useCallback(async (): Promise<void> => {
-        setLoading(true);
-        clearError();
-        try {
-            const data = await findAll();
-            setVacunas(data);
-        } catch (error: unknown) {
-            const message = getErrorMessage(error);
-            setError(message);
-            toast.error(`Error al cargar vacunas: ${message}`);
-        } finally {
-            setLoading(false);
-        }
-    }, [clearError]);
-
-    // Obtener vacuna por ID
-    const getVacunaById = useCallback(async (id: string): Promise<VacunaDetails | null> => {
-        setLoading(true);
-        clearError();
-        try {
-            const data = await findById(id);
-            return data;
-        } catch (error: unknown) {
-            const message = getErrorMessage(error);
-            setError(message);
-            toast.error(`Error al cargar la vacuna: ${message}`);
-            return null;
-        } finally {
-            setLoading(false);
-        }
-    }, [clearError]);
-
-    // Crear nueva vacuna
-    const createVacuna = useCallback(async (payload: VacunaNewRequest): Promise<boolean> => {
-        setLoading(true);
-        clearError();
-        try {
-            const response: VacunaCreateResponse = await create(payload);
-
-            if (response.success) {
-                await getVacunas();
-                toast.success(`La vacuna ${payload.tipo} ha sido creada exitosamente`);
-                return true;
-            }
-
-            const message = response.message || 'Error al crear la vacuna';
-            setError(message);
-            toast.error(message);
-            return false;
-        } catch (error: unknown) {
-            const message = getErrorMessage(error);
-            setError(message);
-            toast.error(message);
-            return false;
-        } finally {
-            setLoading(false);
-        }
-    }, [clearError, getVacunas]);
-
-    // Actualizar vacuna existente
-    const updateVacuna = useCallback(async (id: string, payload: VacunaUpdateRequest): Promise<boolean> => {
-        setLoading(true);
-        clearError();
-        try {
-            const response = await update(id, payload);
-
-            if (response.success) {
-                await getVacunas();
-                toast.success('La vacuna ha sido actualizada exitosamente');
-                return true;
-            }
-
-            const message = response.message || 'Error al actualizar la vacuna';
-            setError(message);
-            toast.error(message);
-            return false;
-        } catch (error: unknown) {
-            const message = getErrorMessage(error);
-            setError(message);
-            toast.error(message);
-            return false;
-        } finally {
-            setLoading(false);
-        }
-    }, [clearError, getVacunas]);
-
-    // Eliminar vacuna
-    const deleteVacuna = useCallback(async (id: string): Promise<boolean> => {
-        setLoading(true);
-        clearError();
-        try {
-            const response = await remove(id);
-
-            if (response.success) {
-                await getVacunas();
-                toast.success('La vacuna ha sido eliminada exitosamente');
-                return true;
-            }
-
-            const message = response.message || 'Error al eliminar la vacuna';
-            setError(message);
-            toast.error(message);
-            return false;
-        } catch (error: unknown) {
-            const message = getErrorMessage(error);
-            setError(message);
-            toast.error(message);
-            return false;
-        } finally {
-            setLoading(false);
-        }
-    }, [clearError, getVacunas]);
-
-    // Filtrar vacunas por tipo
-    const filterVacunasByType = useCallback(async (type: string): Promise<void> => {
-        if (!type.trim()) {
-            await getVacunas();
-            return;
-        }
-
-        setLoading(true);
-        clearError();
-        try {
-            const data = await filterByType(type);
-            setVacunas(data);
-        } catch (error: unknown) {
-            const message = getErrorMessage(error);
-            setError(message);
-            toast.error(`Error al filtrar vacunas por tipo: ${message}`);
-        } finally {
-            setLoading(false);
-        }
-    }, [getVacunas, clearError]);
-
-    // Filtrar vacunas por rango de fechas
-    const filterVacunasByDateRange = useCallback(async (startDate: string, endDate: string): Promise<void> => {
-        if (!startDate || !endDate) {
-            await getVacunas();
-            return;
-        }
-
-        setLoading(true);
-        clearError();
-        try {
-            const data = await findByDateRange(startDate, endDate);
-            setVacunas(data);
-        } catch (error: unknown) {
-            const message = getErrorMessage(error);
-            setError(message);
-            toast.error(`Error al filtrar vacunas por rango de fechas: ${message}`);
-        } finally {
-            setLoading(false);
-        }
-    }, [getVacunas, clearError]);
-
-    return {
-        // Estados 
-        vacunas,
-        loading,
-        error,
-        // Métodos
-        getVacunas,
-        getVacunaById,
-        createVacuna,
-        updateVacuna,
-        deleteVacuna,
-        filterVacunasByType,
-        filterVacunasByDateRange,
-        clearError,
-        getMascotaNames,
-    };
+export const vacunaKeys = {
+  all: ["vacunas"] as const,
+  lists: () => [...vacunaKeys.all, "list"] as const,
+  byPet: (petId: string) => [...vacunaKeys.lists(), "pet", petId] as const,
+  details: () => [...vacunaKeys.all, "detail"] as const,
+  detail: (id: string) => [...vacunaKeys.details(), id] as const,
 };
 
-export default useVacunas;
+export const useVacunas = () => {
+  return useQuery({
+    queryKey: vacunaKeys.lists(),
+    queryFn: VacunaService.getVacunas,
+  });
+};
+
+export const useVacunasPorMascota = (petId: string) => {
+  return useQuery({
+    queryKey: vacunaKeys.byPet(petId),
+    queryFn: () => VacunaService.getVacunasPorMascota(petId),
+    enabled: !!petId,
+  });
+};
+
+export const useVacuna = (id: string) => {
+  return useQuery({
+    queryKey: vacunaKeys.detail(id),
+    queryFn: () => VacunaService.getVacunaById(id),
+    enabled: !!id,
+  });
+};
+
+export const useCreateVacuna = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: CreateVacunaRequest) => VacunaService.createVacuna(data),
+    onSuccess: (newVacuna) => {
+      queryClient.invalidateQueries({ queryKey: vacunaKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: vacunaKeys.byPet(newVacuna.pet_id) });
+      toast.success("Vacuna registrada correctamente");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Error al registrar la vacuna");
+    },
+  });
+};
+
+export const useUpdateVacuna = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateVacunaRequest }) =>
+      VacunaService.updateVacuna(id, data),
+    onSuccess: (updatedVacuna, { id }) => {
+      queryClient.invalidateQueries({ queryKey: vacunaKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: vacunaKeys.byPet(updatedVacuna.pet_id) });
+      queryClient.invalidateQueries({ queryKey: vacunaKeys.detail(id) });
+      toast.success("Vacuna actualizada correctamente");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Error al actualizar la vacuna");
+    },
+  });
+};
+
+export const useDeleteVacuna = (petId?: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => VacunaService.deleteVacuna(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: vacunaKeys.lists() });
+      if (petId) {
+        queryClient.invalidateQueries({ queryKey: vacunaKeys.byPet(petId) });
+      }
+      toast.success("Vacuna eliminada correctamente");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Error al eliminar la vacuna");
+    },
+  });
+};

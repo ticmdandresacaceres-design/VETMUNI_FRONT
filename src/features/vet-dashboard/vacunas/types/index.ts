@@ -1,30 +1,40 @@
-import { CreateResponse, DeleteResponse } from "@/src/lib/api/types";
 
-export type VacunaNewRequest = {
-    tipo: string;
-    fechaAplicacion: string;
-    mascotaId: string;
-    mesesVigencia: number;
+export interface PetBrief {
+  id: string;
+  name: string;
+  species?: string;
 }
 
-export type VacunaUpdateRequest = {
-    tipo: string;
-    fechaAplicacion: string;
-    mesesVigencia: number;
+export interface Vacuna {
+  id: string;
+  type: string;
+  aplication_date: string;
+  months_validity: number;
+  expiration_date: string;
+  pet_id: string;
+  pet?: PetBrief;
+  created_at?: string;
+  updated_at?: string;
 }
 
-export type VacunaDetails = {
-    id: string;
-    tipo: string;
-    fechaaplicacion: string;
-    mascota: string;
-    mesesvigencia: number;
-    fechavencimiento: string;
-    proximadosis: string;
+export interface CreateVacunaRequest {
+  type: string;
+  aplication_date: string;
+  months_validity: number;
+  pet_id: string;
 }
 
-// Tipo de respuesta espicifico para eliminar
-export type VacunaCreateResponse = CreateResponse<VacunaDetails>;
-export type VacunaUpdateResponse = CreateResponse<VacunaDetails>;
-export type VacunaDeleteResponse = DeleteResponse;
+export interface UpdateVacunaRequest {
+  type?: string;
+  aplication_date?: string;
+  months_validity?: number;
+  pet_id?: string;
+}
 
+export interface VacunaResponse {
+  data: Vacuna;
+}
+
+export interface VacunasListResponse {
+  data: Vacuna[];
+}

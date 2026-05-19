@@ -13,7 +13,7 @@ import { LoginRequest } from "../types";
 
 export const LoginForm = () => {
     const [formData, setFormData] = useState<LoginRequest>({
-        correo: "",
+        email: "",
         password: ""
     });
     const [showPassword, setShowPassword] = useState(false);
@@ -28,19 +28,19 @@ export const LoginForm = () => {
 
         try {
             const response = await login(formData);
-            toast.success(`¡Bienvenido de nuevo, ${response.user.nombre}!`);
+            toast.success(`¡Bienvenido de nuevo, ${response.user.name}!`);
             // Redirigir según el rol del usuario
-            const userRoles = response.user.roles;
-            
+            const userRoles = response.user.role;
+
             if (userRoles.includes("ADMIN")) {
                 router.push("/dashboard/admin");
-            } else if (userRoles.includes("VETERINARIA")) {
+            } else if (userRoles.includes("VETERINARIAN")) {
                 router.push("/dashboard/veterinaria");
             } else {
                 // Rol por defecto o sin roles específicos
                 router.push("/dashboard");
             }
-            
+
         } catch (error: any) {
             console.error("Login error:", error);
         } finally {
@@ -63,15 +63,15 @@ export const LoginForm = () => {
             <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
-                        <Label htmlFor="correo">Correo Electrónico</Label>
+                        <Label htmlFor="email">Correo Electrónico</Label>
                         <div className="relative">
                             <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                             <Input
-                                id="correo"
-                                name="correo"
+                                id="email"
+                                name="email"
                                 type="email"
                                 placeholder="tu@email.com"
-                                value={formData.correo}
+                                value={formData.email}
                                 onChange={handleChange}
                                 className="pl-10"
                                 required
@@ -109,9 +109,9 @@ export const LoginForm = () => {
                         </div>
                     </div>
 
-                    <Button 
-                        type="submit" 
-                        className="w-full" 
+                    <Button
+                        type="submit"
+                        className="w-full"
                         disabled={isLoading}
                     >
                         {isLoading ? (

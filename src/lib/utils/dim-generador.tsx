@@ -1,9 +1,8 @@
 import React from 'react';
 import { Document, Page, Text, View, Image, StyleSheet, pdf } from '@react-pdf/renderer';
 import QRCode from 'qrcode';
-import { MascotaPageDetails } from '@/src/features/vet-dashboard/mascotas/types';
+import type { Mascota } from '@/src/features/vet-dashboard/mascotas/types';
 
-// === 1. ESTILOS ===
 const styles = StyleSheet.create({
   page: {
     width: '85.6mm',
@@ -16,15 +15,13 @@ const styles = StyleSheet.create({
     top: 0, left: 0, right: 0, bottom: 0,
     zIndex: -1,
   },
-  // Contenedor principal
   mainContainer: {
     flexDirection: 'row',
-    marginTop: '21mm', 
-    paddingLeft: '4mm', 
+    marginTop: '21mm',
+    paddingLeft: '4mm',
     paddingRight: '0mm',
     alignItems: 'flex-start',
   },
-  // Columna Foto
   photoContainer: {
     width: '19mm',
     height: '25mm',
@@ -38,9 +35,8 @@ const styles = StyleSheet.create({
     height: '100%',
     objectFit: 'cover',
   },
-  // Columna Info (Centro)
   infoContainer: {
-    width: '37mm', 
+    width: '37mm',
     flexDirection: 'column',
     justifyContent: 'flex-start',
     paddingTop: 1,
@@ -53,7 +49,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 5,
     color: '#64748b',
-    width: '11mm', 
+    width: '11mm',
     marginRight: 0.5,
   },
   value: {
@@ -71,10 +67,9 @@ const styles = StyleSheet.create({
   idValue: {
     fontSize: 8.5,
     fontWeight: 'bold',
-    color: '#228b22', 
+    color: '#228b22',
     width: '25.5mm',
   },
-  // Columna QR (Derecha)
   qrContainer: {
     width: '15mm',
     alignItems: 'center',
@@ -93,75 +88,56 @@ const styles = StyleSheet.create({
   },
 });
 
-// === 2. COMPONENTE VISUAL ===
-const MascotaCard = ({ data, qrDataUrl, bgUrl }: { data: MascotaPageDetails, qrDataUrl: string, bgUrl: string }) => {
-  
-  const calcularFecha = (edad: string) => {
-    const hoy = new Date();
-    let años = 0, meses = 0;
-    const añosMatch = edad.match(/(\d+)\s*año/i);
-    if (añosMatch) años = parseInt(añosMatch[1]);
-    const mesesMatch = edad.match(/(\d+)\s*mes/i);
-    if (mesesMatch) meses = parseInt(mesesMatch[1]);
-    
-    const fecha = new Date(hoy);
-    fecha.setFullYear(hoy.getFullYear() - años);
-    fecha.setMonth(hoy.getMonth() - meses);
-    return `${fecha.getDate().toString().padStart(2, '0')}/${(fecha.getMonth() + 1).toString().padStart(2, '0')}/${fecha.getFullYear()}`;
-  };
-
+const MascotaCard = ({ data, qrDataUrl, bgUrl }: { data: Mascota, qrDataUrl: string, bgUrl: string }) => {
   const truncate = (str: string, len: number) => str.length > len ? str.substring(0, len) + '.' : str;
 
   return (
     <Document>
       <Page size={[242.64, 153.01]} style={styles.page}>
         <Image src={bgUrl} style={styles.background} />
-        
+
         <View style={styles.mainContainer}>
-          {/* Foto */}
           <View style={styles.photoContainer}>
-            <Image src={data.fotoUrl || '/placeholder.png'} style={styles.photo} />
+            <Image src="/placeholder.png" style={styles.photo} />
           </View>
 
-          {/* Info Central */}
           <View style={styles.infoContainer}>
             <View style={styles.row}>
                 <Text style={styles.label}>NOMBRE:</Text>
-                <Text style={styles.nameValue}>{truncate(data.nombre.toUpperCase(), 14)}</Text>
+                <Text style={styles.nameValue}>{truncate(data.name.toUpperCase(), 14)}</Text>
             </View>
-            
+
             <View style={styles.row}>
                 <Text style={styles.label}>CÓDIGO:</Text>
-                <Text style={styles.idValue}>{data.identificador}</Text>
+                <Text style={styles.idValue}>{data.id}</Text>
             </View>
-            
+
             <View style={styles.row}>
                 <Text style={styles.label}>ESPECIE:</Text>
-                <Text style={styles.value}>{truncate(data.especie.toUpperCase(), 15)}</Text>
+                <Text style={styles.value}>{truncate(data.species.toUpperCase(), 15)}</Text>
             </View>
-            
+
             <View style={styles.row}>
                 <Text style={styles.label}>RAZA:</Text>
-                <Text style={styles.value}>{truncate(data.raza.toUpperCase(), 16)}</Text>
+                <Text style={styles.value}>{truncate(data.race.toUpperCase(), 16)}</Text>
             </View>
-            
+
             <View style={styles.row}>
                 <Text style={styles.label}>SEXO:</Text>
-                <Text style={styles.value}>{truncate(data.sexo.toUpperCase(), 15)}</Text>
+                <Text style={styles.value}>{truncate(data.gender.toUpperCase(), 15)}</Text>
             </View>
-            
+
             <View style={styles.row}>
                 <Text style={styles.label}>COLOR:</Text>
                 <Text style={styles.value}>{truncate(data.color.toUpperCase(), 15)}</Text>
             </View>
-            
+
             <View style={styles.row}>
-                <Text style={styles.label}>F. NACIM:</Text>
-                <Text style={styles.value}>{calcularFecha(data.edad)}</Text>
+                <Text style={styles.label}>EDAD:</Text>
+                <Text style={styles.value}>{data.years}a {data.months}m</Text>
             </View>
           </View>
 
-          {/* QR Derecha */}
           <View style={styles.qrContainer}>
              {qrDataUrl && <Image src={qrDataUrl} style={styles.qrImage} />}
              <Text style={styles.qrText}>Escanea para</Text>
@@ -173,27 +149,25 @@ const MascotaCard = ({ data, qrDataUrl, bgUrl }: { data: MascotaPageDetails, qrD
   );
 };
 
-export const generateMascotaPDF = async (data: MascotaPageDetails): Promise<void> => {
+export const generateMascotaPDF = async (data: Mascota): Promise<void> => {
   try {
-    // === DISEÑO SUTIL Y LIGERO ===
     const textoQR = `
       DOCUMENTO DE IDENTIDAD DE MASCOTA
 
-      NOMBRE: ${data.nombre.toUpperCase()}
-      IDENTIFICADOR: ${data.identificador}
+      NOMBRE: ${data.name.toUpperCase()}
+      IDENTIFICADOR: ${data.id}
 
       REGISTRO OFICIAL MUNICIPAL
       ANDRES AVELINO CACERES D.
       `;
 
-    // Generamos el QR
-    const qrDataUrl = await QRCode.toDataURL(textoQR, { 
-        margin: 0, 
+    const qrDataUrl = await QRCode.toDataURL(textoQR, {
+        margin: 0,
         color: { dark: '#000000', light: '#FFFFFF' },
-        errorCorrectionLevel: 'L' 
+        errorCorrectionLevel: 'L'
     });
-    
-    const bgUrl = '/images/dim/dim-base.png'; 
+
+    const bgUrl = '/images/dim/dim-base.png';
 
     const blob = await pdf(
       <MascotaCard data={data} qrDataUrl={qrDataUrl} bgUrl={bgUrl} />
@@ -202,12 +176,12 @@ export const generateMascotaPDF = async (data: MascotaPageDetails): Promise<void
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `DIM_${data.identificador}.pdf`;
+    link.download = `DIM_${data.id}.pdf`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    
+
   } catch (error) {
     console.error('Error generating PDF:', error);
     throw error;

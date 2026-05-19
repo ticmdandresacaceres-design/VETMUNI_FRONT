@@ -1,59 +1,43 @@
-import { CreateResponse, UpdateResponse, DeleteResponse } from '@/src/lib/api/types';
 
-export type DuenoNewRequest = {
-    nombre: string;
-    dni: string;
-    direccion: string;
-    telefono: string;
-    correo: string;
-    password: string;
-    latitud: string;
-    longitud: string;
-};
-
-export type DuenoDetails = {
-    id: string;
-    nombre: string;
-    dni: string;
-    direccion: string;
-    telefono: string;
-    correo: string;
-    cantidadmascotas: number;
+export interface Dueno {
+  id: string;
+  dni: string;
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  latitude?: number;
+  longitude?: number;
+  active: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
-export type DuenoUpdateIgnorePasswordAndLocation = {
-    nombre: string;
-    dni: string;
-    direccion: string;
-    telefono: string;
-    correo: string;
-};
+export interface CreateDuenoRequest {
+  dni: string;
+  name: string;
+  email: string;
+  password?: string; // Según GEMINI.MD el endpoint de crear dueño pide password
+  phone?: string;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
+  active?: boolean;
+}
 
-// Tipos de respuesta específicos para Dueño
-export type DuenoCreateResponse = CreateResponse<DuenoDetails>;
-export type DuenoUpdateResponse = UpdateResponse<DuenoDetails>;
-export type DuenoDeleteResponse = DeleteResponse;
+export interface UpdateDuenoRequest {
+  name?: string;
+  phone?: string;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
+  active?: boolean;
+}
 
-export type MascotaDetalle = {
-    id: string;
-    nombre: string;
-    especie: string;
-    raza: string;
-    sexo: string;
-};
+export interface DuenoResponse {
+  data: Dueno;
+}
 
-export type MascotaResume = {
-    cantidadMascotas: number;
-    mascotasList: MascotaDetalle[];
-};
-
-export type DuenoFullDetails = {
-    nombre: string;
-    dni: string;
-    direccion: string;
-    telefono: string;
-    correo: string;
-    longitud: string;
-    latitud: string;
-    mascota: MascotaResume;
-};
+export interface DuenosListResponse {
+  data: Dueno[];
+}

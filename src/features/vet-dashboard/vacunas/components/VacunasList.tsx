@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Eye, Syringe, Plus, Pencil, Trash2, Calendar, Clock, AlertTriangle, Shield, CheckCircle, Info } from "lucide-react"
+import { Syringe, Plus, Pencil, Trash2, Calendar, Clock, AlertTriangle, CheckCircle, Info, Shield } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -16,8 +16,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { MoreHorizontal } from "lucide-react"
-import { useVacunaContext } from "../context/VacunaContext"
-import { VacunaDetails } from "../types"
+import { useVacunas, useDeleteVacuna } from "../hooks/useVacunas"
+import { Vacuna } from "../types"
 import AddVacunaModal from "./AddVacunaModal"
 import EditVacunaModal from "./EditVacunaModal"
 import VacunaFilters from "./VacunaFilters"
@@ -26,30 +26,25 @@ import { ConfirmDialog } from "@/src/shared/components/ConfirmDialog"
 import { useConfirmDialog } from "@/src/shared/hooks/useConfirmDialog"
 
 export default function VacunasList() {
-  const { vacunas, loading, getVacunas, deleteVacuna } = useVacunaContext()
+  const { data: vacunas, isLoading: loading } = useVacunas()
+  const deleteVacunaMutation = useDeleteVacuna()
+  
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  const [vacunaToEdit, setVacunaToEdit] = useState<VacunaDetails | null>(null)
-  const [vacunaToDelete, setVacunaToDelete] = useState<VacunaDetails | null>(null)
+  const [vacunaToEdit, setVacunaToEdit] = useState<Vacuna | null>(null)
   const [isMounted, setIsMounted] = useState(false)
-  const [isDeleting, setIsDeleting] = useState(false)
+  const [filteredVacunas, setFilteredVacunas] = useState<Vacuna[]>([])
   const { isOpen, options, showConfirmDialog, hideConfirmDialog, handleConfirm } = useConfirmDialog()
 
   useEffect(() => {
     setIsMounted(true)
   }, [])
 
-  useEffect(() => {
-    if (isMounted) {
-      getVacunas()
-    }
-  }, [getVacunas, isMounted])
-
   const handleAddClick = () => {
     setIsAddModalOpen(true)
   }
 
-  const handleEditClick = (vacuna: VacunaDetails) => {
+  const handleEditClick = (vacuna: Vacuna) => {
     setVacunaToEdit(vacuna)
     setIsEditModalOpen(true)
   }
@@ -61,32 +56,25 @@ export default function VacunasList() {
     }
   }
 
-  const handleDeleteClick = (vacuna: VacunaDetails) => {
-    setVacunaToDelete(vacuna)
+  const handleDeleteClick = (vacuna: Vacuna) => {
     showConfirmDialog(
       {
         title: "Confirmar eliminación",
-        message: `¿Estás seguro de eliminar la vacuna "${vacuna.tipo}" de ${vacuna.mascota}?\n\nEsta acción no se puede deshacer.`,
+        message: `¿Estás seguro de eliminar la vacuna "${vacuna.type}" de ${vacuna.pet?.name || 'la mascota'}?\n\nEsta acción no se puede deshacer.`,
         buttons: {
           cancel: "Cancelar",
           confirm: "Sí, eliminar"
         }
       },
       async () => {
-        setIsDeleting(true)
-        try {
-          await deleteVacuna(vacuna.id)
-          setVacunaToDelete(null)
-        } finally {
-          setIsDeleting(false)
-        }
+        await deleteVacunaMutation.mutateAsync(vacuna.id)
       }
     )
   }
 
-  const getEstadoVencimiento = (fechaVencimiento: string) => {
+  const getEstadoVencimiento = (expirationDate: string) => {
     const hoy = new Date()
-    const vencimiento = new Date(fechaVencimiento)
+    const vencimiento = new Date(expirationDate)
     const diferenciaDias = Math.ceil((vencimiento.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24))
 
     if (diferenciaDias < 0) {
@@ -106,32 +94,6 @@ export default function VacunasList() {
         text: "Vigente",
         variant: "default" as const,
         icon: CheckCircle
-      }
-    }
-  }
-
-  const getEstadoProximaDosis = (fechaProximaDosis: string) => {
-    const hoy = new Date()
-    const proximaDosis = new Date(fechaProximaDosis)
-    const diferenciaDias = Math.ceil((proximaDosis.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24))
-
-    if (diferenciaDias < 0) {
-      return {
-        text: "Atrasada",
-        variant: "destructive" as const,
-        icon: AlertTriangle
-      }
-    } else if (diferenciaDias <= 15) {
-      return {
-        text: "Próxima",
-        variant: "secondary" as const,
-        icon: Clock
-      }
-    } else {
-      return {
-        text: "Programada",
-        variant: "default" as const,
-        icon: Calendar
       }
     }
   }
@@ -183,7 +145,8 @@ export default function VacunasList() {
     )
   }
 
-  const validVacunas = Array.isArray(vacunas) ? vacunas.filter(vacuna => vacuna && vacuna.id) : []
+  const validVacunas = Array.isArray(vacunas) ? vacunas : []
+  const displayVacunas = filteredVacunas.length > 0 ? filteredVacunas : validVacunas
 
   return (
     <>
@@ -212,7 +175,7 @@ export default function VacunasList() {
 
             {/* Filtros - Segunda fila, ancho completo con separación */}
             <div className="w-full pt-2">
-              <VacunaFilters />
+              <VacunaFilters vacunas={validVacunas} onFilterChange={setFilteredVacunas} />
             </div>
           </CardHeader>
           
@@ -235,7 +198,7 @@ export default function VacunasList() {
                 <div className="min-w-0">
                   <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Vigentes</p>
                   <p className="text-xl font-bold">
-                    {validVacunas.filter(v => getEstadoVencimiento(v.fechavencimiento).text === "Vigente").length}
+                    {validVacunas.filter(v => getEstadoVencimiento(v.expiration_date).text === "Vigente").length}
                   </p>
                 </div>
               </div>
@@ -244,9 +207,9 @@ export default function VacunasList() {
                   <Clock className="h-4 w-4 text-orange-600 dark:text-orange-400" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Próximas</p>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Por Vencer</p>
                   <p className="text-xl font-bold">
-                    {validVacunas.filter(v => getEstadoProximaDosis(v.proximadosis).text === "Próxima").length}
+                    {validVacunas.filter(v => getEstadoVencimiento(v.expiration_date).text === "Por vencer").length}
                   </p>
                 </div>
               </div>
@@ -262,14 +225,14 @@ export default function VacunasList() {
                       <TableHead className="font-semibold w-[140px]">Mascota</TableHead>
                       <TableHead className="font-semibold w-[120px]">Fecha Aplicación</TableHead>
                       <TableHead className="font-semibold w-[110px]">Estado</TableHead>
-                      <TableHead className="font-semibold w-[140px]">Próxima Dosis</TableHead>
+                      <TableHead className="font-semibold w-[140px]">Fecha Vencimiento</TableHead>
                       <TableHead className="font-semibold w-20">Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {loading ? (
                       <LoadingSkeleton />
-                    ) : validVacunas.length === 0 ? (
+                    ) : displayVacunas.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={6} className="h-64">
                           <div className="flex flex-col items-center justify-center text-center">
@@ -288,11 +251,9 @@ export default function VacunasList() {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      validVacunas.map((vacuna) => {
-                        const estadoVencimiento = getEstadoVencimiento(vacuna.fechavencimiento)
-                        const estadoProximaDosis = getEstadoProximaDosis(vacuna.proximadosis)
+                      displayVacunas.map((vacuna) => {
+                        const estadoVencimiento = getEstadoVencimiento(vacuna.expiration_date)
                         const IconVencimiento = estadoVencimiento.icon
-                        const IconProximaDosis = estadoProximaDosis.icon
 
                         return (
                           <TableRow key={vacuna.id} className="hover:bg-muted/40 transition-colors">
@@ -301,11 +262,11 @@ export default function VacunasList() {
                                 <div className="w-7 h-7 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0">
                                   <Syringe className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
                                 </div>
-                                <span className="truncate text-sm">{vacuna.tipo || 'Sin tipo'}</span>
+                                <span className="truncate text-sm">{vacuna.type || 'Sin tipo'}</span>
                               </div>
                             </TableCell>
-                            <TableCell className="text-sm truncate">{vacuna.mascota || 'Sin mascota'}</TableCell>
-                            <TableCell className="text-sm">{formatDate(vacuna.fechaaplicacion)}</TableCell>
+                            <TableCell className="text-sm truncate">{vacuna.pet?.name || 'Sin mascota'}</TableCell>
+                            <TableCell className="text-sm">{formatDate(vacuna.aplication_date)}</TableCell>
                             <TableCell>
                               <Badge variant={estadoVencimiento.variant} className="flex items-center gap-1 w-fit text-xs">
                                 <IconVencimiento className="h-3 w-3" />
@@ -313,14 +274,8 @@ export default function VacunasList() {
                               </Badge>
                             </TableCell>
                             <TableCell>
-                              <div className="space-y-1">
-                                <Badge variant={estadoProximaDosis.variant} className="flex items-center gap-1 w-fit text-xs">
-                                  <IconProximaDosis className="h-3 w-3" />
-                                  {estadoProximaDosis.text}
-                                </Badge>
-                                <div className="text-xs text-muted-foreground">
-                                  {formatDate(vacuna.proximadosis)}
-                                </div>
+                              <div className="text-sm">
+                                {formatDate(vacuna.expiration_date)}
                               </div>
                             </TableCell>
                             <TableCell>
@@ -364,12 +319,12 @@ export default function VacunasList() {
             </div>
 
             {/* Footer Info */}
-            {validVacunas.length > 0 && (
+            {displayVacunas.length > 0 && (
               <div className="mt-4 flex items-center justify-between gap-4 p-3 rounded-lg bg-muted/30 border">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Info className="h-4 w-4 shrink-0" />
                   <span>
-                    Mostrando <span className="font-medium text-foreground">{validVacunas.length}</span> vacuna{validVacunas.length !== 1 ? 's' : ''}
+                    Mostrando <span className="font-medium text-foreground">{displayVacunas.length}</span> de {validVacunas.length} vacuna{validVacunas.length !== 1 ? 's' : ''}
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground hidden sm:block">
@@ -402,7 +357,7 @@ export default function VacunasList() {
           message={options.message}
           buttons={options.buttons}
           onConfirm={handleConfirm}
-          loading={isDeleting}
+          loading={deleteVacunaMutation.isPending}
         />
       )}
     </>

@@ -6,92 +6,91 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { useMascotaContext } from "../context/MascotaContext"
+import type { Mascota } from "../types"
 
-export default function MascotaFilters() {
-  const { searchMascotas, filterMascotas, getMascotas } = useMascotaContext()
+interface MascotaFiltersProps {
+  mascotas: Mascota[]
+  onFilterChange: (filtered: Mascota[]) => void
+}
+
+export default function MascotaFilters({ mascotas, onFilterChange }: MascotaFiltersProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [filters, setFilters] = useState({
     especie: "",
-    sexo: "",
+    gender: "",
     raza: ""
   })
   const [showFilters, setShowFilters] = useState(false)
 
-  const handleSearch = async (value: string) => {
-    setSearchTerm(value)
-    const trimmed = value.trim()
+  const applyFilters = () => {
+    const trimmed = searchTerm.trim().toLowerCase()
+    const { especie, gender, raza } = filters
 
-    if (trimmed.length === 0) {
-      await getMascotas()
-      return
+    let result = mascotas
+
+    if (trimmed.length > 0) {
+      result = result.filter(
+        (m) =>
+          m.name.toLowerCase().includes(trimmed) ||
+          m.race.toLowerCase().includes(trimmed) ||
+          m.user?.name.toLowerCase().includes(trimmed)
+      )
     }
 
-    // Solo hacer fetch cuando haya al menos 3 caracteres
-    if (trimmed.length >= 3) {
-      await searchMascotas(trimmed)
+    if (especie) {
+      result = result.filter((m) => m.species.toLowerCase() === especie.toLowerCase())
     }
+
+    if (gender) {
+      result = result.filter((m) => m.gender.toLowerCase() === gender.toLowerCase())
+    }
+
+    if (raza) {
+      result = result.filter((m) => m.race.toLowerCase().includes(raza.toLowerCase()))
+    }
+
+    onFilterChange(result)
   }
 
   const handleFilterChange = (field: string, value: string) => {
     setFilters(prev => ({
       ...prev,
-      [field]: value
+      [field]: value === "all" ? "" : value
     }))
   }
 
-  const applyFilters = async () => {
-    const { especie, sexo, raza } = filters
-    
-    if (!especie && !sexo && !raza) {
-      await getMascotas()
-      return
-    }
-
-    const params: (string | undefined)[] = []
-    
-    params.push(especie && especie.trim() ? especie : undefined)
-    params.push(sexo && sexo.trim() ? sexo : undefined)
-    params.push(raza && raza.trim() ? raza : undefined)
-
-    await filterMascotas(...params)
-  }
-
-  const clearFilters = async () => {
-    setFilters({
-      especie: "",
-      sexo: "",
-      raza: ""
-    })
-    await getMascotas()
-  }
-
-  const clearSearch = async () => {
+  const clearFilters = () => {
+    setFilters({ especie: "", gender: "", raza: "" })
     setSearchTerm("")
-    await getMascotas()
+    onFilterChange(mascotas)
   }
 
-  const hasActiveFilters = filters.especie || filters.sexo || filters.raza
+  const hasActiveFilters = filters.especie || filters.gender || filters.raza
   const hasActiveSearch = searchTerm.trim().length > 0
 
   return (
     <>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-1 items-center space-x-2">
-          {/* Búsqueda */}
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Buscar por nombre..."
+              placeholder="Buscar por nombre, raza o dueño..."
               value={searchTerm}
-              onChange={(e) => handleSearch(e.target.value)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value)
+                setTimeout(() => applyFilters(), 0)
+              }}
               className="pl-9"
             />
             {hasActiveSearch && (
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={clearSearch}
+                onClick={() => {
+                  setSearchTerm("")
+                  applyFilters()
+                }}
                 className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2 p-0"
               >
                 <X className="h-3 w-3" />
@@ -99,7 +98,6 @@ export default function MascotaFilters() {
             )}
           </div>
 
-          {/* Botón para mostrar/ocultar filtros */}
           <Button
             variant="outline"
             size="sm"
@@ -117,16 +115,17 @@ export default function MascotaFilters() {
         </div>
       </div>
 
-      {/* Panel de filtros desplegable */}
       {showFilters && (
         <div className="rounded-lg border bg-card p-4 mt-2">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-            {/* Filtro por Especie */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Especie</label>
-              <Select 
-                value={filters.especie || "all"} 
-                onValueChange={(value) => handleFilterChange("especie", value === "all" ? "" : value)}
+              <Select
+                value={filters.especie || "all"}
+                onValueChange={(value) => {
+                  handleFilterChange("especie", value)
+                  setTimeout(() => applyFilters(), 0)
+                }}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Todas las especies" />
@@ -143,45 +142,41 @@ export default function MascotaFilters() {
               </Select>
             </div>
 
-            {/* Filtro por Sexo */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Sexo</label>
-              <Select 
-                value={filters.sexo || "all"} 
-                onValueChange={(value) => handleFilterChange("sexo", value === "all" ? "" : value)}
+              <Select
+                value={filters.gender || "all"}
+                onValueChange={(value) => {
+                  handleFilterChange("gender", value)
+                  setTimeout(() => applyFilters(), 0)
+                }}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Todos los sexos" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos los sexos</SelectItem>
-                  <SelectItem value="Macho">Macho</SelectItem>
-                  <SelectItem value="Hembra">Hembra</SelectItem>
+                  <SelectItem value="MACHO">Macho</SelectItem>
+                  <SelectItem value="HEMBRA">Hembra</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            {/* Filtro por Raza */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Raza</label>
               <Input
                 placeholder="Filtrar por raza..."
                 value={filters.raza}
-                onChange={(e) => handleFilterChange("raza", e.target.value)}
+                onChange={(e) => {
+                  handleFilterChange("raza", e.target.value)
+                  setTimeout(() => applyFilters(), 0)
+                }}
               />
             </div>
 
-            {/* Botones de acción */}
             <div className="flex flex-col justify-end space-y-2 sm:col-span-3 lg:col-span-1">
-              <Button 
-                onClick={applyFilters}
-                size="sm"
-                className="w-full"
-              >
-                Aplicar Filtros
-              </Button>
               {hasActiveFilters && (
-                <Button 
+                <Button
                   onClick={clearFilters}
                   variant="outline"
                   size="sm"
@@ -193,7 +188,6 @@ export default function MascotaFilters() {
             </div>
           </div>
 
-          {/* Filtros activos */}
           {hasActiveFilters && (
             <div className="mt-4 flex flex-wrap gap-2">
               <span className="text-sm text-muted-foreground">Filtros activos:</span>
@@ -203,20 +197,26 @@ export default function MascotaFilters() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleFilterChange("especie", "")}
+                    onClick={() => {
+                      handleFilterChange("especie", "")
+                      setTimeout(() => applyFilters(), 0)
+                    }}
                     className="h-4 w-4 p-0 hover:bg-transparent"
                   >
                     <X className="h-3 w-3" />
                   </Button>
                 </Badge>
               )}
-              {filters.sexo && (
+              {filters.gender && (
                 <Badge variant="secondary" className="flex items-center gap-1">
-                  Sexo: {filters.sexo}
+                  Sexo: {filters.gender}
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleFilterChange("sexo", "")}
+                    onClick={() => {
+                      handleFilterChange("gender", "")
+                      setTimeout(() => applyFilters(), 0)
+                    }}
                     className="h-4 w-4 p-0 hover:bg-transparent"
                   >
                     <X className="h-3 w-3" />
@@ -229,7 +229,10 @@ export default function MascotaFilters() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleFilterChange("raza", "")}
+                    onClick={() => {
+                      handleFilterChange("raza", "")
+                      setTimeout(() => applyFilters(), 0)
+                    }}
                     className="h-4 w-4 p-0 hover:bg-transparent"
                   >
                     <X className="h-3 w-3" />

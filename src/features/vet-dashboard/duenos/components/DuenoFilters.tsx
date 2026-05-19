@@ -1,44 +1,49 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
-import { useDuenoContext } from "../context/DuenoContext"
+import type { Dueno } from "../types"
 
-export default function DuenoFilters() {
-  const { searchDuenos, getDuenos } = useDuenoContext()
+interface DuenoFiltersProps {
+  duenos: Dueno[]
+  onFilterChange: (filtered: Dueno[]) => void
+}
+
+export default function DuenoFilters({ duenos, onFilterChange }: DuenoFiltersProps) {
   const [searchTerm, setSearchTerm] = useState("")
 
-  const handleSearch = async (value: string) => {
+  const handleSearch = (value: string) => {
     setSearchTerm(value)
-    const trimmed = value.trim()
+
+    const trimmed = value.trim().toLowerCase()
 
     if (trimmed.length === 0) {
-      await getDuenos()
+      onFilterChange(duenos)
       return
     }
 
-    // Solo hacer fetch cuando haya al menos 3 caracteres
-    if (trimmed.length >= 4) {
-      await searchDuenos(trimmed)
-    }
+    const filtered = duenos.filter(
+      (dueno) =>
+        dueno.name.toLowerCase().includes(trimmed) ||
+        dueno.dni.toLowerCase().includes(trimmed) ||
+        dueno.email.toLowerCase().includes(trimmed)
+    )
+
+    onFilterChange(filtered)
   }
 
   return (
-    <>
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-1 items-center space-x-2">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por nombre y DNI..."
-              value={searchTerm}
-              onChange={(e) => handleSearch(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-        </div>
+    <div className="flex items-center gap-2">
+      <div className="relative flex-1 max-w-sm">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          placeholder="Buscar por nombre, DNI o email..."
+          value={searchTerm}
+          onChange={(e) => handleSearch(e.target.value)}
+          className="pl-9"
+        />
       </div>
-    </>
+    </div>
   )
 }

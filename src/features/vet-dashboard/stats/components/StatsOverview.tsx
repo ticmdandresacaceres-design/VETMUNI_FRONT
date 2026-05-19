@@ -1,45 +1,45 @@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Heart, Shield, PawPrint, TrendingUp } from 'lucide-react';
-import { EstadisticasDashboard } from '../types/Index';
+import { Users, Shield, PawPrint, TrendingUp, AlertCircle, UserCheck } from 'lucide-react';
+import { DashboardStats } from '../types';
 
 interface StatsOverviewProps {
-    stats: EstadisticasDashboard;
+    stats: DashboardStats;
 }
 
 export function StatsOverview({ stats }: StatsOverviewProps) {
     const cards = [
         {
-            title: 'Total Dueños',
-            value: stats.totalDuenos,
-            icon: Users,
-            badgeText: 'Registrados',
-            description: 'Usuarios activos'
+            title: 'Dueños Activos',
+            value: stats.active_owners,
+            icon: UserCheck,
+            badgeText: 'Usuarios',
+            description: 'Dueños con cuenta activa'
         },
         {
             title: 'Total Mascotas',
-            value: stats.totalMascotas,
+            value: stats.total_pets,
             icon: PawPrint,
-            badgeText: 'Registradas',
-            description: 'Mascotas en el sistema'
+            badgeText: 'Pacientes',
+            description: 'Mascotas registradas'
         },
         {
-            title: 'Total Vacunas',
-            value: stats.totalVacunas,
+            title: 'Vacunas Aplicadas',
+            value: stats.total_vaccines_applied,
             icon: Shield,
-            badgeText: 'Aplicadas',
-            description: 'Vacunas administradas'
+            badgeText: 'Inmunización',
+            description: 'Total histórico'
         },
         {
-            title: 'Especies',
-            value: Object.keys(stats.mascotasPorEspecie).filter(
-                key => stats.mascotasPorEspecie[key as keyof typeof stats.mascotasPorEspecie] > 0
-            ).length,
-            icon: Heart,
-            badgeText: 'Tipos',
-            description: 'Especies diferentes'
+            title: 'Alertas Vacunas',
+            value: stats.upcoming_vaccine_alerts,
+            icon: AlertCircle,
+            badgeText: 'Atención',
+            description: 'Por vencer pronto'
         },
     ];
+
+    const maxValue = Math.max(...cards.map(c => c.value), 1);
 
     return (
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
@@ -81,7 +81,7 @@ export function StatsOverview({ stats }: StatsOverviewProps) {
                             <div 
                                 className="h-full bg-primary rounded-full transition-all duration-1000 ease-out"
                                 style={{ 
-                                    width: `${Math.min(90, (card.value / Math.max(...cards.map(c => c.value))) * 100)}%` 
+                                    width: `${Math.min(100, (card.value / maxValue) * 100)}%` 
                                 }}
                             />
                         </div>

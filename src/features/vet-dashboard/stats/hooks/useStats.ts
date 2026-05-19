@@ -1,38 +1,46 @@
-import { useState, useEffect } from 'react';
-import { getDashboardStats } from '../service/StatsService';
-import { EstadisticasDashboard } from '../types/Index';
+import { useQuery } from "@tanstack/react-query";
+import * as StatsService from "../service/StatsService";
 
-export const useStats = () => {
-  const [data, setData] = useState<EstadisticasDashboard | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+export const statsKeys = {
+  all: ["stats"] as const,
+  dashboard: () => [...statsKeys.all, "dashboard"] as const,
+  vaccineAlerts: () => [...statsKeys.all, "vaccine-alerts"] as const,
+  unvaccinated: () => [...statsKeys.all, "unvaccinated"] as const,
+  monthlyActivity: () => [...statsKeys.all, "monthly-activity"] as const,
+  speciesDistribution: () => [...statsKeys.all, "species-distribution"] as const,
+};
 
-  const fetchStats = async () => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const stats = await getDashboardStats();
-      setData(stats);
-    } catch (err) {
-      setError(err as Error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+export const useDashboardStats = () => {
+  return useQuery({
+    queryKey: statsKeys.dashboard(),
+    queryFn: StatsService.getDashboardStats,
+  });
+};
 
-  useEffect(() => {
-    fetchStats();
-  }, []);
+export const useVaccineAlerts = () => {
+  return useQuery({
+    queryKey: statsKeys.vaccineAlerts(),
+    queryFn: StatsService.getVaccineAlerts,
+  });
+};
 
-  const refetch = () => {
-    fetchStats();
-  };
+export const useUnvaccinatedPets = () => {
+  return useQuery({
+    queryKey: statsKeys.unvaccinated(),
+    queryFn: StatsService.getUnvaccinatedPets,
+  });
+};
 
-  return {
-    data,
-    isLoading,
-    error,
-    refetch,
-  };
+export const useMonthlyActivity = () => {
+  return useQuery({
+    queryKey: statsKeys.monthlyActivity(),
+    queryFn: StatsService.getMonthlyActivity,
+  });
+};
+
+export const useSpeciesDistribution = () => {
+  return useQuery({
+    queryKey: statsKeys.speciesDistribution(),
+    queryFn: StatsService.getSpeciesDistribution,
+  });
 };

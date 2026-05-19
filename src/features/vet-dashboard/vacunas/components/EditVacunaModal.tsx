@@ -30,38 +30,38 @@ import {
 } from "@/components/ui/popover"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { useVacunaContext } from "../context/VacunaContext"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Calendar } from "@/components/ui/calendar"
 import { cn } from "@/lib/utils"
 import { ConfirmDialog } from "@/src/shared/components/ConfirmDialog"
 import { useConfirmDialog } from "@/src/shared/hooks/useConfirmDialog"
-import { VacunaDetails, VacunaUpdateRequest } from "../types"
+import { useUpdateVacuna } from "../hooks/useVacunas"
+import type { Vacuna, UpdateVacunaRequest } from "../types"
 
 const formSchema = z.object({
-  tipo: z.string().min(1, "El tipo de vacuna es requerido"),
-  tipoPersonalizado: z.string().optional(),
-  fechaAplicacion: z.string().min(1, "La fecha de aplicación es requerida"),
-  mesesVigencia: z.number().min(1, "Los meses de vigencia son requeridos").max(60, "Máximo 60 meses"),
+  type: z.string().min(1, "El tipo de vacuna es requerido"),
+  typeCustom: z.string().optional(),
+  aplication_date: z.string().min(1, "La fecha de aplicación es requerida"),
+  months_validity: z.number().min(1, "Los meses de vigencia son requeridos").max(60, "Máximo 60 meses"),
+  pet_id: z.string().min(1, "Debe seleccionar una mascota"),
 }).refine((data) => {
-  if (data.tipo === "Otra") {
-    return data.tipoPersonalizado && data.tipoPersonalizado.trim().length > 0
+  if (data.type === "Otra") {
+    return data.typeCustom && data.typeCustom.trim().length > 0
   }
   return true
 }, {
   message: "Debe especificar el tipo de vacuna personalizado",
-  path: ["tipoPersonalizado"]
+  path: ["typeCustom"]
 })
 
 interface EditVacunaModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  vacuna: VacunaDetails
+  vacuna: Vacuna
 }
 
 export default function EditVacunaModal({ open, onOpenChange, vacuna }: EditVacunaModalProps) {
-  const { updateVacuna, loading } = useVacunaContext()
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const updateVacunaMutation = useUpdateVacuna()
   const { isOpen, options, showConfirmDialog, hideConfirmDialog, handleConfirm } = useConfirmDialog()
 
   const stringToDate = useCallback((dateString: string) => {
@@ -88,63 +88,58 @@ export default function EditVacunaModal({ open, onOpenChange, vacuna }: EditVacu
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      tipo: "",
-      tipoPersonalizado: "",
-      fechaAplicacion: "",
-      mesesVigencia: 12,
+      type: "",
+      typeCustom: "",
+      aplication_date: "",
+      months_validity: 12,
+      pet_id: "",
     },
   })
 
   useEffect(() => {
     if (open && vacuna) {
-      const tipoVacuna = getTipoVacuna(vacuna.tipo)
+      const tipoVacuna = getTipoVacuna(vacuna.type)
       form.reset({
-        tipo: tipoVacuna,
-        tipoPersonalizado: tipoVacuna === "Otra" ? vacuna.tipo : "",
-        fechaAplicacion: vacuna.fechaaplicacion,
-        mesesVigencia: vacuna.mesesvigencia,
+        type: tipoVacuna,
+        typeCustom: tipoVacuna === "Otra" ? vacuna.type : "",
+        aplication_date: vacuna.aplication_date,
+        months_validity: vacuna.months_validity,
+        pet_id: vacuna.pet_id,
       })
     }
-  }, [open]) // Removido: form, getTipoVacuna, tiposVacuna, vacuna
+  }, [open, vacuna, form, getTipoVacuna])
 
-  const tipoSeleccionado = form.watch("tipo")
+  const tipoSeleccionado = form.watch("type")
 
   const handleSubmitWithConfirmation = useCallback(async () => {
     const isValid = await form.trigger()
     if (!isValid) return
 
     const values = form.getValues()
-    const tipoVacuna = values.tipo === "Otra" ? values.tipoPersonalizado : values.tipo
+    const tipoVacuna = values.type === "Otra" ? values.typeCustom : values.type
 
     showConfirmDialog(
       {
         title: "Confirmar actualización",
-        message: `¿Estás seguro de actualizar la vacuna "${tipoVacuna}" para ${vacuna.mascota}?`,
+        message: `¿Estás seguro de actualizar la vacuna "${tipoVacuna}" para ${vacuna.pet?.name || 'la mascota'}?`,
         buttons: { cancel: "Cancelar", confirm: "Sí, actualizar" }
       },
       handleSubmit
     )
-  }, [form, showConfirmDialog, vacuna.mascota])
+  }, [form, showConfirmDialog, vacuna.pet?.name])
 
   const handleSubmit = useCallback(async () => {
     const values = form.getValues()
-    setIsSubmitting(true)
-    try {
-      const payload: VacunaUpdateRequest = {
-        tipo: values.tipo === "Otra" ? values.tipoPersonalizado || "" : values.tipo,
-        fechaAplicacion: values.fechaAplicacion,
-        mesesVigencia: values.mesesVigencia,
-      }
-
-      const success = await updateVacuna(vacuna.id, payload)
-      if (success) {
-        form.reset()
-        onOpenChange(false)
-      }
-    } finally {
-      setIsSubmitting(false)
+    const payload: UpdateVacunaRequest = {
+      type: values.type === "Otra" ? values.typeCustom || "" : values.type,
+      aplication_date: values.aplication_date,
+      months_validity: values.months_validity,
+      pet_id: values.pet_id,
     }
-  }, [updateVacuna, vacuna.id, form, onOpenChange])
+
+    await updateVacunaMutation.mutateAsync({ id: vacuna.id, data: payload })
+    onOpenChange(false)
+  }, [updateVacunaMutation, form, vacuna.id, onOpenChange])
 
   return (
     <>
@@ -156,7 +151,7 @@ export default function EditVacunaModal({ open, onOpenChange, vacuna }: EditVacu
               Editar Vacuna
             </DialogTitle>
             <DialogDescription>
-              Actualiza la información de la vacuna de {vacuna.mascota}.
+              Actualiza la información de la vacuna de {vacuna.pet?.name || 'la mascota'}.
             </DialogDescription>
           </DialogHeader>
 
@@ -168,15 +163,15 @@ export default function EditVacunaModal({ open, onOpenChange, vacuna }: EditVacu
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
-                      name="tipo"
+                      name="type"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Vacuna</FormLabel>
-                          <Select 
+                          <Select
                             onValueChange={(value) => {
                               field.onChange(value)
-                              if (value !== "Otra") form.setValue("tipoPersonalizado", "")
-                            }} 
+                              if (value !== "Otra") form.setValue("typeCustom", "")
+                            }}
                             value={field.value}
                           >
                             <FormControl>
@@ -198,12 +193,12 @@ export default function EditVacunaModal({ open, onOpenChange, vacuna }: EditVacu
                     {tipoSeleccionado === "Otra" && (
                       <FormField
                         control={form.control}
-                        name="tipoPersonalizado"
+                        name="typeCustom"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Especificar Vacuna</FormLabel>
                             <FormControl>
-                              <Input placeholder="Escriba el tipo de vacuna" {...field} disabled={isSubmitting} />
+                              <Input placeholder="Escriba el tipo de vacuna" {...field} disabled={updateVacunaMutation.isPending} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -218,7 +213,7 @@ export default function EditVacunaModal({ open, onOpenChange, vacuna }: EditVacu
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
-                      name="fechaAplicacion"
+                      name="aplication_date"
                       render={({ field }) => (
                         <FormItem className="flex flex-col">
                           <FormLabel>Fecha de Aplicación</FormLabel>
@@ -259,7 +254,7 @@ export default function EditVacunaModal({ open, onOpenChange, vacuna }: EditVacu
 
                     <FormField
                       control={form.control}
-                      name="mesesVigencia"
+                      name="months_validity"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Meses de Vigencia</FormLabel>
@@ -284,20 +279,20 @@ export default function EditVacunaModal({ open, onOpenChange, vacuna }: EditVacu
           </div>
 
           <DialogFooter className="px-6 py-4 border-t shrink-0 gap-2 sm:gap-0">
-            <Button 
-              type="button" 
-              variant="outline" 
+            <Button
+              type="button"
+              variant="outline"
               onClick={() => onOpenChange(false)}
-              disabled={isSubmitting}
+              disabled={updateVacunaMutation.isPending}
             >
               Cancelar
             </Button>
-            <Button 
-              type="button" 
-              disabled={isSubmitting || loading}
+            <Button
+              type="button"
+              disabled={updateVacunaMutation.isPending}
               onClick={handleSubmitWithConfirmation}
             >
-              {isSubmitting ? "Actualizando..." : "Actualizar Vacuna"}
+              {updateVacunaMutation.isPending ? "Actualizando..." : "Actualizar Vacuna"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -311,7 +306,7 @@ export default function EditVacunaModal({ open, onOpenChange, vacuna }: EditVacu
           message={options.message}
           buttons={options.buttons}
           onConfirm={handleConfirm}
-          loading={isSubmitting}
+          loading={updateVacunaMutation.isPending}
         />
       )}
     </>

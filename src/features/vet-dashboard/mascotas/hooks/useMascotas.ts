@@ -1,269 +1,104 @@
-import { useState, useCallback } from 'react';
-import { findAll, findById, create, update, remove, search, filter, getDetails, uploadImage } from '../services/MascotaService';
-import { MascotaDetails, MascotaNewRequest, MascotaUpdateRequest, MascotaCreateResponse, MascotaUpdateResponse, MascotaDeleteResponse, MascotaPageDetails } from '../types';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import * as MascotaService from "../services/MascotaService";
+import { CreateMascotaRequest, UpdateMascotaRequest } from "../types";
 import { toast } from "sonner";
 
-// Definición de la interfaz para el hook useMascotas
-interface UseMascotasReturn {
-    mascotas: MascotaDetails[];
-    mascotaPage: MascotaPageDetails | null;
-    loading: boolean;
-    error: string | null;
-    getMascotas: () => Promise<void>;
-    getMascotaById: (id: string) => Promise<MascotaDetails | null>;
-    getMascotaPage: (mascotaId: string) => Promise<MascotaPageDetails | null>;
-    createMascota: (payload: MascotaNewRequest) => Promise<boolean>;
-    updateMascota: (id: string, payload: MascotaUpdateRequest) => Promise<boolean>;
-    deleteMascota: (id: string) => Promise<boolean>;
-    searchMascotas: (term: string) => Promise<void>;
-    filterMascotas: (especie?: string, sexo?: string, raza?: string) => Promise<void>;
-    uploadMascotaImage: (file: File, descripcion: string, mascotaId: string) => Promise<boolean>;
-    clearError: () => void;
-}
-
-function getErrorMessage(error: unknown): string {
-    if (error instanceof Error) return error.message;
-    if (typeof error === 'string') return error;
-    return 'Ocurrió un error inesperado';
-}
-
-const useMascotas = (): UseMascotasReturn => {
-
-    // Estado para mascotas, carga y errores
-    const [mascotas, setMascotas] = useState<MascotaDetails[]>([]);
-    const [mascotaPage, setMascotaPage] = useState<MascotaPageDetails | null>(null);
-    const [loading, setLoading] = useState<boolean>(false);
-    const [error, setError] = useState<string | null>(null);
-
-    // Función para limpiar errores
-    const clearError = useCallback(() => {
-        setError(null);
-    }, []);
-
-    // Funciones CRUD y de búsqueda
-    const getMascotas = useCallback(async (): Promise<void> => {
-        setLoading(true);
-        clearError();
-        try {
-            const data = await findAll();
-            setMascotas(data);
-        } catch (error: unknown) {
-            const message = getErrorMessage(error);
-            setError(message);
-            toast.error(`Error al cargar mascotas: ${message}`);
-        } finally {
-            setLoading(false);
-        }
-    }, [clearError]);
-
-    // Obtener mascota por ID
-    const getMascotaById = useCallback(async (id: string): Promise<MascotaDetails | null> => {
-        setLoading(true);
-        clearError();
-        try {
-            const data = await findById(id);
-            return data;
-        } catch (error: unknown) {
-            const message = getErrorMessage(error);
-            setError(message);
-            toast.error(`Error al cargar la mascota: ${message}`);
-            return null;
-        } finally {
-            setLoading(false);
-        }
-    }, [clearError]);
-
-    // Obtener página completa de una mascota con todos sus detalles
-    const getMascotaPage = useCallback(async (mascotaId: string): Promise<MascotaPageDetails | null> => {
-        setLoading(true);
-        clearError();
-        try {
-            const data = await getDetails(mascotaId);
-            setMascotaPage(data);
-            return data;
-        } catch (error: unknown) {
-            const message = getErrorMessage(error);
-            setError(message);
-            toast.error(`Error al cargar los detalles de la mascota: ${message}`);
-            return null;
-        } finally {
-            setLoading(false);
-        }
-    }, [clearError]);
-
-    // Crear nueva mascota
-    const createMascota = useCallback(async (payload: MascotaNewRequest): Promise<boolean> => {
-        setLoading(true);
-        clearError();
-        try {
-            const response: MascotaCreateResponse = await create(payload);
-
-            if (response.success) {
-                await getMascotas();
-                toast.success(`La mascota ${payload.nombre} ha sido creada exitosamente`);
-                return true;
-            }
-
-            const message = response.message || 'Error al crear la mascota';
-            setError(message);
-            toast.error(message);
-            return false;
-        } catch (error: unknown) {
-            const message = getErrorMessage(error);
-            setError(message);
-            toast.error(message);
-            return false;
-        } finally {
-            setLoading(false);
-        }
-    }, [clearError, getMascotas]);
-
-    const updateMascota = useCallback(async (id: string, payload: MascotaUpdateRequest): Promise<boolean> => {
-        setLoading(true);
-        clearError();
-        try {
-            const response: MascotaUpdateResponse = await update(payload, id);
-
-            if (response.success) {
-                const updatedMascota = await findById(id);
-                if (updatedMascota) {
-                    setMascotas(prev => prev.map(mascota =>
-                        mascota.id === id ? updatedMascota : mascota
-                    ));
-                } else {
-                    await getMascotas();
-                }
-                toast.success(`Los datos de ${payload.nombre} han sido actualizados correctamente`);
-                return true;
-            }
-
-            const message = response.message || 'Error al actualizar la mascota';
-            setError(message);
-            toast.error(message);
-            return false;
-        } catch (error: unknown) {
-            const message = getErrorMessage(error);
-            setError(message);
-            toast.error(message);
-            return false;
-        } finally {
-            setLoading(false);
-        }
-    }, [clearError, getMascotas]);
-
-    const deleteMascota = useCallback(async (id: string): Promise<boolean> => {
-        setLoading(true);
-        clearError();
-        try {
-            const response: MascotaDeleteResponse = await remove(id);
-
-            if (response.success) {
-                setMascotas(prev => prev.filter(mascota => mascota.id !== id));
-                toast.success("La mascota ha sido eliminada exitosamente");
-                return true;
-            }
-
-            const message = response.message || 'Error al eliminar la mascota';
-            setError(message);
-            toast.error(message);
-            return false;
-        } catch (error: unknown) {
-            const message = getErrorMessage(error);
-            setError(message);
-            toast.error(message);
-            return false;
-        } finally {
-            setLoading(false);
-        }
-    }, [clearError]);
-
-    const searchMascotas = useCallback(async (term: string): Promise<void> => {
-        if (!term.trim()) {
-            await getMascotas();
-            return;
-        }
-
-        setLoading(true);
-        clearError();
-        try {
-            const data = await search(term);
-            setMascotas(data);
-        } catch (error: unknown) {
-            const message = getErrorMessage(error);
-            setError(message);
-            toast.error(`Error al buscar mascotas: ${message}`);
-        } finally {
-            setLoading(false);
-        }
-    }, [getMascotas, clearError]);
-
-    const filterMascotas = useCallback(async (especie?: string, sexo?: string, raza?: string): Promise<void> => {
-        if (!especie && !sexo && !raza) {
-            await getMascotas()
-            return
-        }
-
-        setLoading(true);
-        clearError();
-        try {
-            const data = await filter(especie, sexo, raza);
-            setMascotas(data);
-        } catch (error: unknown) {
-            const message = getErrorMessage(error);
-            setError(message);
-            toast.error(`Error al filtrar mascotas: ${message}`);
-        } finally {
-            setLoading(false);
-        }
-    }, [getMascotas, clearError]);
-
-    const uploadMascotaImage = useCallback(async (file: File, descripcion: string, mascotaId: string): Promise<boolean> => {
-        setLoading(true);
-        clearError();
-        try {
-            const response = await uploadImage(file, descripcion, mascotaId);
-            
-            if (response.success) {
-                // Actualizar los detalles de la mascota si está cargada
-                if (mascotaPage && mascotaPage.id === mascotaId) {
-                    await getMascotaPage(mascotaId);
-                }
-                toast.success("La imagen ha sido subida exitosamente");
-                return true;
-            }
-
-            const message = response.message || 'Error al subir la imagen';
-            setError(message);
-            toast.error(message);
-            return false;
-        } catch (error: unknown) {
-            const message = getErrorMessage(error);
-            setError(message);
-            toast.error(`Error al subir la imagen: ${message}`);
-            return false;
-        } finally {
-            setLoading(false);
-        }
-    }, [clearError, getMascotaPage, mascotaPage]);
-
-    return {
-        // Estados 
-        mascotas,
-        mascotaPage,
-        loading,
-        error,
-        // Métodos
-        getMascotas,
-        getMascotaById,
-        getMascotaPage,
-        createMascota,
-        updateMascota,
-        deleteMascota,
-        searchMascotas,
-        filterMascotas,
-        uploadMascotaImage,
-        clearError,
-    };
+export const mascotaKeys = {
+  all: ["mascotas"] as const,
+  lists: () => [...mascotaKeys.all, "list"] as const,
+  details: () => [...mascotaKeys.all, "detail"] as const,
+  detail: (id: string) => [...mascotaKeys.details(), id] as const,
 };
 
-export default useMascotas;
+export const useMascotas = () => {
+  return useQuery({
+    queryKey: mascotaKeys.lists(),
+    queryFn: MascotaService.getMascotas,
+  });
+};
+
+export const useMascota = (id: string) => {
+  return useQuery({
+    queryKey: mascotaKeys.detail(id),
+    queryFn: () => MascotaService.getMascotaById(id),
+    enabled: !!id,
+  });
+};
+
+export const useCreateMascota = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: CreateMascotaRequest) => MascotaService.createMascota(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: mascotaKeys.lists() });
+      toast.success("Mascota registrada correctamente");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Error al registrar la mascota");
+    },
+  });
+};
+
+export const useUpdateMascota = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateMascotaRequest }) =>
+      MascotaService.updateMascota(id, data),
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: mascotaKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: mascotaKeys.detail(id) });
+      toast.success("Mascota actualizada correctamente");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Error al actualizar la mascota");
+    },
+  });
+};
+
+export const useDeleteMascota = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => MascotaService.deleteMascota(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: mascotaKeys.lists() });
+      toast.success("Mascota eliminada correctamente");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Error al eliminar la mascota");
+    },
+  });
+};
+
+export const useUploadPetImage = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ petId, image }: { petId: string; image: File }) =>
+      MascotaService.uploadPetImage(petId, image),
+    onSuccess: (_, { petId }) => {
+      queryClient.invalidateQueries({ queryKey: mascotaKeys.detail(petId) });
+      toast.success("Imagen subida correctamente");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Error al subir la imagen");
+    },
+  });
+};
+
+export const useDeletePetImage = (petId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (imageId: string) => MascotaService.deletePetImage(imageId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: mascotaKeys.detail(petId) });
+      toast.success("Imagen eliminada correctamente");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Error al eliminar la imagen");
+    },
+  });
+};

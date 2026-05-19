@@ -148,7 +148,7 @@ export default function AdminLayoutClient({ children }: AdminLayoutProps) {
                     >
                       <Avatar className="h-9 w-9">
                         <AvatarFallback className="bg-linear-to-br from-primary/20 to-primary/10 text-primary font-semibold">
-                          {user?.nombre ? getUserInitials(user.nombre) : 'AD'}
+                          {user?.name ? getUserInitials(user.name) : 'AD'}
                         </AvatarFallback>
                       </Avatar>
                     </Button>
@@ -159,10 +159,10 @@ export default function AdminLayoutClient({ children }: AdminLayoutProps) {
                         <div className="flex items-center space-x-2">
                           <div className="flex-1">
                             <p className="text-sm font-medium leading-none">
-                              {user?.nombre || 'Administrador'}
+                              {user?.name || 'Administrador'}
                             </p>
                             <p className="text-xs leading-none text-muted-foreground mt-1">
-                              {user?.correo || 'admin@veterinaria.com'}
+                              {user?.email || 'admin@veterinaria.com'}
                             </p>
                           </div>
                           <Badge variant="outline" className="text-xs">

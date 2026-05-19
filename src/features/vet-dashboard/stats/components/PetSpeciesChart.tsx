@@ -2,40 +2,32 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartConfig, ChartContainer } from '@/components/ui/chart';
-import { Pie, PieChart } from 'recharts';
+import { Pie, PieChart, Cell } from 'recharts';
 import { Badge } from '@/components/ui/badge';
+import { SpeciesDistribution } from '../types';
 
 interface PetSpeciesChartProps {
-    data: {
-        perros: number;
-        gatos: number;
-        conejos: number;
-    };
+    data: SpeciesDistribution[];
 }
 
-const chartConfig = {
-    perros: {
-        label: 'Perros',
-        color: 'hsl(220, 70%, 50%)',
-    },
-    gatos: {
-        label: 'Gatos',
-        color: 'hsl(340, 75%, 50%)',
-    },
-    conejos: {
-        label: 'Conejos',
-        color: 'hsl(142, 70%, 45%)',
-    },
-} satisfies ChartConfig;
+const COLORS = [
+    'hsl(220, 70%, 50%)',
+    'hsl(340, 75%, 50%)',
+    'hsl(142, 70%, 45%)',
+    'hsl(48, 96%, 53%)',
+    'hsl(262, 83%, 58%)',
+];
 
 export function PetSpeciesChart({ data }: PetSpeciesChartProps) {
-    const chartData = [
-        { name: 'Perros', value: data.perros, fill: chartConfig.perros.color },
-        { name: 'Gatos', value: data.gatos, fill: chartConfig.gatos.color },
-        { name: 'Conejos', value: data.conejos, fill: chartConfig.conejos.color },
-    ].filter(item => item.value > 0); // Solo mostrar especies con datos
+    const total = data.reduce((sum, item) => sum + item.count, 0);
 
-    const total = data.perros + data.gatos + data.conejos;
+    const chartConfig: ChartConfig = data.reduce((config, item, index) => {
+        config[item.species.toLowerCase()] = {
+            label: item.species,
+            color: COLORS[index % COLORS.length],
+        };
+        return config;
+    }, {} as ChartConfig);
 
     return (
         <Card className="flex flex-col">
@@ -52,27 +44,33 @@ export function PetSpeciesChart({ data }: PetSpeciesChartProps) {
                 >
                     <PieChart>
                         <Pie
-                            data={chartData}
-                            dataKey="value"
-                            nameKey="name"
+                            data={data}
+                            dataKey="count"
+                            nameKey="species"
                             cx="50%"
                             cy="50%"
-                            innerRadius={60}  // Hace un donut chart
+                            innerRadius={60}
                             outerRadius={80}
                             paddingAngle={5}
-                            label={({ name, percent }) => 
-                                `${name} ${(percent * 100).toFixed(0)}%`
+                            label={({ species, percentage }) => 
+                                `${species} ${percentage}%`
                             }
-                        />
+                        >
+                            {data.map((_, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                        </Pie>
                     </PieChart>
                 </ChartContainer>
                 <div className="flex flex-wrap gap-1 mt-4 justify-center">
-                    {Object.entries(data).map(([species, count]) => (
-                        count > 0 && (
-                            <Badge key={species} variant="outline" className="text-xs">
-                                {chartConfig[species as keyof typeof chartConfig].label}: {count}
-                            </Badge>
-                        )
+                    {data.map((item, index) => (
+                        <Badge key={item.species} variant="outline" className="text-xs">
+                            <div 
+                                className="w-2 h-2 rounded-full mr-1.5" 
+                                style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                            />
+                            {item.species}: {item.count}
+                        </Badge>
                     ))}
                     <Badge variant="secondary" className="text-xs font-semibold">
                         Total: {total}

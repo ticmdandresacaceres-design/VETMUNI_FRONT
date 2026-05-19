@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useMemo } from "react"
 import { Check, ChevronsUpDown, Search, Heart } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -17,8 +17,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { useMascotaContext } from "../../mascotas/context/MascotaContext"
-import { MascotaDetails } from "../../mascotas/types"
+import { useMascotas } from "../../mascotas/hooks/useMascotas"
 
 interface SelectMascotaProps {
   value?: string
@@ -27,7 +26,7 @@ interface SelectMascotaProps {
   disabled?: boolean
 }
 
-const MAX_RESULTS = 5
+const MAX_RESULTS = 10
 
 function SelectMascota({ 
   value, 
@@ -37,44 +36,25 @@ function SelectMascota({
 }: SelectMascotaProps) {
   const [open, setOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
-  const { mascotas, getMascotaById, searchMascotas, loading } = useMascotaContext()
-  const [selectedMascota, setSelectedMascota] = useState<MascotaDetails | null>(null)
+  const { data: mascotas, isLoading: loading } = useMascotas()
 
-  // CORREGIDO: Cargar la mascota seleccionada cuando value cambie
-  useEffect(() => {
-    if (value) {
-      // Si el value cambió o no tenemos la mascota cargada, cargarla
-      if (!selectedMascota || selectedMascota.id !== value) {
-        getMascotaById(value).then((mascota) => {
-          if (mascota) {
-            setSelectedMascota(mascota)
-          } else {
-            setSelectedMascota(null)
-          }
-        })
-      }
-    } else {
-      setSelectedMascota(null)
-    }
-  }, [value, getMascotaById]) // Removido selectedMascota de las dependencias
+  const selectedMascota = useMemo(() => {
+    return mascotas?.find(m => m.id === value) || null
+  }, [mascotas, value])
 
-  // Buscar mascotas solo cuando el usuario escribe
-  useEffect(() => {
-    if (!open) return 
+  const filteredMascotas = useMemo(() => {
+    if (!mascotas) return []
+    if (!searchTerm.trim()) return mascotas.slice(0, MAX_RESULTS)
     
-    const timeoutId = setTimeout(() => {
-      if (searchTerm.trim().length >= 2) { 
-        searchMascotas(searchTerm)
-      }
-    }, 300) 
-
-    return () => clearTimeout(timeoutId)
-  }, [searchTerm, searchMascotas, open])
-
-  // Limitar resultados a máximo 5
-  const limitedMascotas = useMemo(() => {
-    return mascotas.slice(0, MAX_RESULTS)
-  }, [mascotas])
+    const term = searchTerm.toLowerCase()
+    return mascotas
+      .filter(m => 
+        m.name.toLowerCase().includes(term) || 
+        m.user?.name.toLowerCase().includes(term) ||
+        m.species.toLowerCase().includes(term)
+      )
+      .slice(0, MAX_RESULTS)
+  }, [mascotas, searchTerm])
 
   const handleSelect = (mascotaId: string) => {
     onValueChange(mascotaId)
@@ -88,9 +68,6 @@ function SelectMascota({
       setSearchTerm("")
     }
   }
-
-  const showResults = searchTerm.trim().length >= 2
-  const showMinimumMessage = searchTerm.trim().length > 0 && searchTerm.trim().length < 2
 
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
@@ -106,7 +83,7 @@ function SelectMascota({
             <div className="flex items-center gap-2">
               <Heart className="h-4 w-4 text-muted-foreground" />
               <span className="truncate">
-                {selectedMascota.nombre} ({selectedMascota.especie})
+                {selectedMascota.name} ({selectedMascota.species})
               </span>
             </div>
           ) : (
@@ -121,31 +98,24 @@ function SelectMascota({
       <PopoverContent className="w-full p-0" align="start">
         <Command shouldFilter={false}>
           <CommandInput
-            placeholder="Buscar por nombre o propietario (mín. 2 caracteres)..."
+            placeholder="Buscar por nombre o propietario..."
             value={searchTerm}
             onValueChange={setSearchTerm}
             className="h-9"
           />
           <CommandList>
-            {!showResults && !showMinimumMessage ? (
-              <CommandEmpty>Escribe al menos 2 caracteres</CommandEmpty>
-            ) : showMinimumMessage ? (
-              <CommandEmpty>Escribe al menos 2 caracteres</CommandEmpty>
-            ) : loading ? (
-              <CommandEmpty>Buscando mascotas...</CommandEmpty>
-            ) : limitedMascotas.length === 0 ? (
+            {loading ? (
+              <CommandEmpty>Cargando mascotas...</CommandEmpty>
+            ) : filteredMascotas.length === 0 ? (
               <CommandEmpty>
-                No se encontraron mascotas con "{searchTerm}"
+                No se encontraron mascotas.
               </CommandEmpty>
             ) : (
               <CommandGroup>
                 <div className="px-2 py-1 text-xs text-muted-foreground border-b">
-                  {limitedMascotas.length === MAX_RESULTS ? 
-                    `Mostrando las primeras ${MAX_RESULTS} mascotas` : 
-                    `${limitedMascotas.length} mascota${limitedMascotas.length !== 1 ? 's' : ''}`
-                  }
+                  {filteredMascotas.length} resultado{filteredMascotas.length !== 1 ? 's' : ''}
                 </div>
-                {limitedMascotas.map((mascota) => (
+                {filteredMascotas.map((mascota) => (
                   <CommandItem
                     key={mascota.id}
                     value={mascota.id}
@@ -154,9 +124,9 @@ function SelectMascota({
                   >
                     <Heart className="h-4 w-4 text-muted-foreground" />
                     <div className="flex flex-col flex-1">
-                      <span className="font-medium">{mascota.nombre}</span>
+                      <span className="font-medium">{mascota.name}</span>
                       <span className="text-sm text-muted-foreground">
-                        {mascota.especie} • {mascota.raza} • Propietario: {mascota.dueno}
+                        {mascota.species} • {mascota.race} • Propietario: {mascota.user?.name}
                       </span>
                     </div>
                     <Check
@@ -167,11 +137,6 @@ function SelectMascota({
                     />
                   </CommandItem>
                 ))}
-                {limitedMascotas.length === MAX_RESULTS && (
-                  <div className="px-2 py-2 text-xs text-muted-foreground text-center border-t bg-muted/30">
-                    Refina tu búsqueda para ver más resultados específicos
-                  </div>
-                )}
               </CommandGroup>
             )}
           </CommandList>

@@ -7,9 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Eye, EyeOff, Mail, Lock, User, Phone, MapPin, CreditCard, UserPlus } from "lucide-react";
-import { toast } from "sonner";
-import { useVetContext } from "../context/VetContext";
-import { RegisterRequest } from "../types";
+import { useCreateVeterinario } from "../hooks/useVet";
+import { CreateVeterinarioRequest } from "../types";
 
 interface RegisterFormProps {
     trigger?: React.ReactNode;
@@ -18,31 +17,30 @@ interface RegisterFormProps {
 }
 
 export const RegisterFormModal = ({ trigger, open, onOpenChange }: RegisterFormProps) => {
-    const [formData, setFormData] = useState<RegisterRequest>({
-        nombre: "",
-        correo: "",
+    const [formData, setFormData] = useState<CreateVeterinarioRequest>({
+        name: "",
+        email: "",
         password: "",
-        telefono: "",
+        phone: "",
         dni: "",
-        direccion: ""
+        address: ""
     });
     const [showPassword, setShowPassword] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
 
-    const { createVet } = useVetContext();
+    const createVetMutation = useCreateVeterinario();
 
     const handleOpenChange = (openState: boolean) => {
         setIsOpen(openState);
         onOpenChange?.(openState);
         if (!openState) {
             setFormData({
-                nombre: "",
-                correo: "",
+                name: "",
+                email: "",
                 password: "",
-                telefono: "",
+                phone: "",
                 dni: "",
-                direccion: ""
+                address: ""
             });
             setShowPassword(false);
         }
@@ -50,17 +48,12 @@ export const RegisterFormModal = ({ trigger, open, onOpenChange }: RegisterFormP
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setIsLoading(true);
 
         try {
-            const success = await createVet(formData);
-            if (success) {
-                handleOpenChange(false);
-            }
-        } catch (error: any) {
-            toast.error(error.message || "Error al registrar usuario");
-        } finally {
-            setIsLoading(false);
+            await createVetMutation.mutateAsync(formData);
+            handleOpenChange(false);
+        } catch (error) {
+            // Error handling is managed by the hook's onError
         }
     };
 
@@ -96,15 +89,15 @@ export const RegisterFormModal = ({ trigger, open, onOpenChange }: RegisterFormP
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="nombre">Nombre Completo</Label>
+                            <Label htmlFor="name">Nombre Completo</Label>
                             <div className="relative">
                                 <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                                 <Input
-                                    id="nombre"
-                                    name="nombre"
+                                    id="name"
+                                    name="name"
                                     type="text"
                                     placeholder="Juan Pérez"
-                                    value={formData.nombre}
+                                    value={formData.name}
                                     onChange={handleChange}
                                     className="pl-10"
                                     required
@@ -131,15 +124,15 @@ export const RegisterFormModal = ({ trigger, open, onOpenChange }: RegisterFormP
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="correo">Correo Electrónico</Label>
+                        <Label htmlFor="email">Correo Electrónico</Label>
                         <div className="relative">
                             <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                             <Input
-                                id="correo"
-                                name="correo"
+                                id="email"
+                                name="email"
                                 type="email"
                                 placeholder="veterinario@email.com"
-                                value={formData.correo}
+                                value={formData.email}
                                 onChange={handleChange}
                                 className="pl-10"
                                 required
@@ -179,15 +172,15 @@ export const RegisterFormModal = ({ trigger, open, onOpenChange }: RegisterFormP
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="telefono">Teléfono</Label>
+                            <Label htmlFor="phone">Teléfono</Label>
                             <div className="relative">
                                 <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                                 <Input
-                                    id="telefono"
-                                    name="telefono"
+                                    id="phone"
+                                    name="phone"
                                     type="tel"
                                     placeholder="987654321"
-                                    value={formData.telefono}
+                                    value={formData.phone}
                                     onChange={handleChange}
                                     className="pl-10"
                                     required
@@ -196,15 +189,15 @@ export const RegisterFormModal = ({ trigger, open, onOpenChange }: RegisterFormP
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="direccion">Dirección</Label>
+                            <Label htmlFor="address">Dirección</Label>
                             <div className="relative">
                                 <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                                 <Input
-                                    id="direccion"
-                                    name="direccion"
+                                    id="address"
+                                    name="address"
                                     type="text"
                                     placeholder="Av. Principal 123"
-                                    value={formData.direccion}
+                                    value={formData.address}
                                     onChange={handleChange}
                                     className="pl-10"
                                     required
@@ -216,9 +209,9 @@ export const RegisterFormModal = ({ trigger, open, onOpenChange }: RegisterFormP
                     <Button 
                         type="submit" 
                         className="w-full" 
-                        disabled={isLoading}
+                        disabled={createVetMutation.isPending}
                     >
-                        {isLoading ? (
+                        {createVetMutation.isPending ? (
                             <>
                                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                                 Registrando...

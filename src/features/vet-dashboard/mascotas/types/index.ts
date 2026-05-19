@@ -1,90 +1,74 @@
-import { CreateResponse, UpdateResponse, DeleteResponse } from '@/src/lib/api/types';
 
-export type MascotaNewRequest = {
-    nombre: string;
-    especie: string;
-    raza: string;
-    sexo: string;
-    temperamento: string;
-    condicionReproductiva: string;
-    color: string;
-    usuarioId: string;
-    anios: number;
-    meses: number;
+export interface UserBrief {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
 }
 
-export type MascotaDetails = {
-    id: string;
-    nombre: string;
-    especie: string;
-    raza: string;
-    edad: string; // Cambio: edad como string del backend
-    sexo: string;
-    temperamento: string;
-    condicionreproductiva: string;
-    color: string;
-    dueno: string;
-    identificador: string;
+export interface Mascota {
+  id: string;
+  name: string;
+  species: string;
+  race: string;
+  gender: string;
+  temperament: string;
+  reproductive_condition: string;
+  color: string;
+  years: number;
+  months: number;
+  status: string;
+  user_id: string;
+  user?: UserBrief;
+  created_at?: string;
+  updated_at?: string;
 }
 
-export type MascotaUpdateRequest = {
-    nombre: string;
-    especie: string;
-    raza: string;
-    sexo: string;
-    temperamento: string;
-    condicionReproductiva: string;
-    color: string;
-    anios: number;
-    meses: number;
-    estado: string;
-};
-
-export type MascotaCreateResponse = CreateResponse<MascotaDetails>;
-export type MascotaUpdateResponse = UpdateResponse<MascotaDetails>;
-export type MascotaDeleteResponse = DeleteResponse;
-
-export type ImagenResume = {
-    id: string;
-    url: string;
-    descripcion: string;
-    fechaSubida: string;
+export interface MascotaImagen {
+  id: string;
+  filename: string;
+  path: string;
+  pet_id: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
-export type DuenoResume = {
-    id: string;
-    nombre: string;
-    telefono: string;
-    correo: string;
+export interface CreateMascotaRequest {
+  name: string;
+  species: string;
+  race: string;
+  gender: string;
+  temperament: string;
+  reproductive_condition: string;
+  color: string;
+  years: number;
+  months: number;
+  status: string;
+  user_id: string;
 }
 
-export type VacunaResume = {
-    id: string;
-    tipo: string;
-    fechaAplicacion: string;
-    fechaVencimiento: string;
+export interface UpdateMascotaRequest {
+  name?: string;
+  species?: string;
+  race?: string;
+  gender?: string;
+  temperament?: string;
+  reproductive_condition?: string;
+  color?: string;
+  years?: number;
+  months?: number;
+  status?: string;
 }
 
-export type VacunaDetails = {
-    totalVacunas: number;
-    vacunaslist: VacunaResume[];
+export interface MascotaResponse {
+  data: Mascota;
 }
 
-export type MascotaPageDetails = {
-    id: string;
-    nombre: string;
-    especie: string;
-    raza: string;
-    edad: string;
-    sexo: string;
-    color: string;
-    identificador: string;
-    fotoUrl: string;
-    estado: string;
-    imagenList: ImagenResume[];
-    dueno: DuenoResume;
-    vacuna: VacunaDetails;
-    createdAt: string;
+export interface MascotasListResponse {
+  data: Mascota[];
 }
 
-export type ImageMascotaCreateResponse = CreateResponse<ImagenResume>;
+export interface MascotaImagenResponse {
+  message: string;
+  data: MascotaImagen;
+}

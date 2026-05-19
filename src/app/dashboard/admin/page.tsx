@@ -6,17 +6,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { 
-    Users, 
-    Plus, 
-    ArrowRight, 
-    PawPrint, 
-    Shield, 
-    Activity, 
-    TrendingUp, 
-    Calendar,
+import {
+    Users,
+    Plus,
+    ArrowRight,
+    PawPrint,
+    Shield,
+    Activity,
+    TrendingUp,
     UserCheck,
-    UserX,
     Clock,
     Syringe,
     Heart
@@ -27,39 +25,27 @@ import { MascotaProvider, useMascotaContext } from "@/src/features/vet-dashboard
 import { VacunaProvider, useVacunaContext } from "@/src/features/vet-dashboard/vacunas/context/VacunaContext";
 import { useAuthContext } from "@/src/features/auth/context/AuthContext";
 
-// Componente interno que usa todos los contexts
 function AdminDashboardContent() {
     const { user } = useAuthContext();
-    const { veterinarians, loading: vetsLoading, getVets } = useVetContext();
-    const { duenos, loading: duenosLoading, getDuenos } = useDuenoContext();
-    const { mascotas, loading: mascotasLoading, getMascotas } = useMascotaContext();
-    const { vacunas, loading: vacunasLoading, getVacunas } = useVacunaContext();
+    const { data: veterinarians = [], isLoading: vetsLoading } = useVetContext();
+    const { data: duenos = [], isLoading: duenosLoading } = useDuenoContext();
+    const { data: mascotas = [], isLoading: mascotasLoading } = useMascotaContext();
+    const { data: vacunas = [], isLoading: vacunasLoading } = useVacunaContext();
     const [isMounted, setIsMounted] = useState(false);
 
     useEffect(() => {
         setIsMounted(true);
     }, []);
 
-    useEffect(() => {
-        if (isMounted) {
-            getVets();
-            getDuenos();
-            getMascotas();
-            getVacunas();
-        }
-    }, [getVets, getDuenos, getMascotas, getVacunas, isMounted]);
-
-    // Estadísticas calculadas
     const totalVets = veterinarians.length;
-    const activeVets = veterinarians.filter(vet => vet.activo).length;
+    const activeVets = veterinarians.filter(vet => vet.active).length;
     const totalDuenos = duenos.length;
     const totalMascotas = mascotas.length;
     const totalVacunas = vacunas.length;
-    
-    // Vacunas del mes actual
+
     const currentMonth = new Date().getMonth();
     const vacunasThisMonth = vacunas.filter(vacuna => {
-        const vacunaDate = new Date(vacuna.fechaaplicacion);
+        const vacunaDate = new Date(vacuna.aplication_date);
         return vacunaDate.getMonth() === currentMonth;
     }).length;
 
@@ -74,12 +60,11 @@ function AdminDashboardContent() {
 
     return (
         <div className="space-y-8">
-            {/* Header personalizado */}
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-4xl font-bold tracking-tight bg-linear-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                            {greeting}, {user?.nombre || "Admin"} 👋
+                            {greeting}, {user?.name || "Admin"} 👋
                         </h1>
                         <p className="text-xl text-muted-foreground mt-2">
                             Tu clínica veterinaria en un vistazo
@@ -90,19 +75,18 @@ function AdminDashboardContent() {
                         Panel Admin
                     </Badge>
                 </div>
-                
+
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Clock className="h-4 w-4" />
-                    {new Date().toLocaleDateString('es-ES', { 
-                        weekday: 'long', 
-                        year: 'numeric', 
-                        month: 'long', 
-                        day: 'numeric' 
+                    {new Date().toLocaleDateString('es-ES', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
                     })}
                 </div>
             </div>
 
-            {/* Stats Overview */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Card className="border-l-4 border-l-primary/80 bg-lienar-to-r from-primary/5 to-transparent">
                     <CardHeader className="pb-2">
@@ -189,7 +173,6 @@ function AdminDashboardContent() {
                 </Card>
             </div>
 
-            {/* Main Actions */}
             <div className="grid gap-6 md:grid-cols-2">
                 <Card className="group hover:shadow-lg transition-all duration-300 bg-linear-to-br from-card to-muted/20">
                     <CardHeader>
@@ -260,7 +243,6 @@ function AdminDashboardContent() {
                 </Card>
             </div>
 
-            {/* Quick Actions */}
             <Card className="bg-linear-to-r from-card to-accent/30">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -315,7 +297,6 @@ function AdminDashboardContent() {
     );
 }
 
-// Loading skeleton simplificado
 function AdminLoadingSkeleton() {
     return (
         <div className="space-y-8">
@@ -340,7 +321,6 @@ function AdminLoadingSkeleton() {
     );
 }
 
-// Componente principal con todos los providers
 function AdminPage() {
     return (
         <VetProvider>

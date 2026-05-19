@@ -25,23 +25,23 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ConfirmDialog } from "@/src/shared/components/ConfirmDialog"
 import { useConfirmDialog } from "@/src/shared/hooks/useConfirmDialog"
-import { useMascotaContext } from "../context/MascotaContext"
-import { useDuenoContext } from "../../duenos/context/DuenoContext"
-import { MascotaNewRequest } from "../types"
+import { useCreateMascota } from "../hooks/useMascotas"
+import { CreateMascotaRequest } from "../types"
 import SelectDueno from "./SelectDueno"
+import apiClient from "@/src/lib/api/axios"
 
 const formSchema = z.object({
-  nombre: z.string().min(1, "El nombre es requerido"),
-  especie: z.string().min(1, "La especie es requerida"),
-  especieOtra: z.string().optional(),
-  raza: z.string().min(1, "La raza es requerida"),
-  anios: z.number().min(0, "Los años deben ser 0 o mayor").max(50, "Los años no pueden ser mayor a 50"),
-  meses: z.number().min(0, "Los meses deben ser 0 o mayor").max(11, "Los meses no pueden ser mayor a 11"),
-  sexo: z.string().min(1, "El sexo es requerido"),
-  temperamento: z.string().min(1, "El temperamento es requerido"),
-  condicionReproductiva: z.string().min(1, "La condición reproductiva es requerida"),
+  name: z.string().min(1, "El nombre es requerido"),
+  species: z.string().min(1, "La especie es requerida"),
+  speciesOther: z.string().optional(),
+  race: z.string().min(1, "La raza es requerida"),
+  years: z.number().min(0, "Los años deben ser 0 o mayor").max(50, "Los años no pueden ser mayor a 50"),
+  months: z.number().min(0, "Los meses deben ser 0 o mayor").max(11, "Los meses no pueden ser mayor a 11"),
+  gender: z.string().min(1, "El sexo es requerido"),
+  temperament: z.string().min(1, "El temperamento es requerido"),
+  reproductive_condition: z.string().min(1, "La condición reproductiva es requerida"),
   color: z.string().min(1, "El color es requerido"),
-  usuarioId: z.string().min(1, "Debe seleccionar un dueño"),
+  user_id: z.string().min(1, "Debe seleccionar un dueño"),
 })
 
 interface AddMascotaModalProps {
@@ -50,64 +50,62 @@ interface AddMascotaModalProps {
 }
 
 export default function AddMascotaModal({ open, onOpenChange }: AddMascotaModalProps) {
-  const { createMascota, loading } = useMascotaContext()
-  const { getDuenoById } = useDuenoContext()
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [especieSeleccionada, setEspecieSeleccionada] = useState("")
+  const createMascotaMutation = useCreateMascota()
+  const [speciesSelected, setSpeciesSelected] = useState("")
   const { isOpen, options, showConfirmDialog, hideConfirmDialog, handleConfirm } = useConfirmDialog()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      nombre: "",
-      especie: "",
-      especieOtra: "",
-      raza: "",
-      anios: 0,
-      meses: 0,
-      sexo: "",
-      temperamento: "",
-      condicionReproductiva: "",
+      name: "",
+      species: "",
+      speciesOther: "",
+      race: "",
+      years: 0,
+      months: 0,
+      gender: "",
+      temperament: "",
+      reproductive_condition: "",
       color: "",
-      usuarioId: "",
+      user_id: "",
     },
   })
 
   useEffect(() => {
     if (!open) {
       form.reset()
-      setEspecieSeleccionada("")
+      setSpeciesSelected("")
     }
   }, [open, form])
 
-  const getDuenoNombre = useCallback(async () => {
-    const usuarioId = form.getValues("usuarioId")
-    if (!usuarioId) return "el propietario seleccionado"
+  const getDuenoNombre = async () => {
+    const userId = form.getValues("user_id")
+    if (!userId) return "el propietario seleccionado"
     
     try {
-      const dueno = await getDuenoById(usuarioId)
-      return dueno ? dueno.nombre : "el propietario seleccionado"
+      const response = await apiClient.get(`/users/${userId}`)
+      return response.data?.data?.name || "el propietario seleccionado"
     } catch {
       return "el propietario seleccionado"
     }
-  }, [form, getDuenoById])
+  }
 
   const handleSubmitWithConfirmation = useCallback(async () => {
     const isValid = await form.trigger()
     if (!isValid) return
 
     const values = form.getValues()
-    const especieCompleta = values.especie === "Otro" ? values.especieOtra : values.especie
+    const finalSpecies = values.species === "Otro" ? values.speciesOther : values.species
     const duenoNombre = await getDuenoNombre()
     
-    const edad = values.anios > 0 || values.meses > 0 
-      ? `${values.anios} año${values.anios !== 1 ? 's' : ''} y ${values.meses} mes${values.meses !== 1 ? 'es' : ''}`
+    const ageText = values.years > 0 || values.months > 0 
+      ? `${values.years} año${values.years !== 1 ? 's' : ''} y ${values.months} mes${values.months !== 1 ? 'es' : ''}`
       : "menos de 1 mes"
 
     showConfirmDialog(
       {
         title: "Confirmar registro",
-        message: `¿Estás seguro de registrar a "${values.nombre}"?\n\nEspecie: ${especieCompleta}\nEdad: ${edad}\nPropietario: ${duenoNombre}`,
+        message: `¿Estás seguro de registrar a "${values.name}"?\n\nEspecie: ${finalSpecies}\nEdad: ${ageText}\nPropietario: ${duenoNombre}`,
         buttons: {
           cancel: "Revisar",
           confirm: "Sí, registrar"
@@ -115,35 +113,33 @@ export default function AddMascotaModal({ open, onOpenChange }: AddMascotaModalP
       },
       handleSubmit
     )
-  }, [form, showConfirmDialog, getDuenoNombre])
+  }, [form, showConfirmDialog])
 
   const handleSubmit = useCallback(async () => {
     const values = form.getValues()
-    setIsSubmitting(true)
     try {
-      const payload: MascotaNewRequest = {
-        nombre: values.nombre,
-        especie: values.especie === "Otro" ? values.especieOtra || "" : values.especie,
-        raza: values.raza,
-        anios: values.anios,
-        meses: values.meses,
-        sexo: values.sexo,
-        temperamento: values.temperamento,
-        condicionReproductiva: values.condicionReproductiva,
+      const payload: CreateMascotaRequest = {
+        name: values.name,
+        species: values.species === "Otro" ? values.speciesOther || "" : values.species,
+        race: values.race,
+        years: values.years,
+        months: values.months,
+        gender: values.gender,
+        temperament: values.temperament,
+        reproductive_condition: values.reproductive_condition,
         color: values.color,
-        usuarioId: values.usuarioId,
+        user_id: values.user_id,
+        status: "Activo"
       }
 
-      const success = await createMascota(payload)
-      if (success) {
-        form.reset()
-        setEspecieSeleccionada("")
-        onOpenChange(false)
-      }
-    } finally {
-      setIsSubmitting(false)
+      await createMascotaMutation.mutateAsync(payload)
+      form.reset()
+      setSpeciesSelected("")
+      onOpenChange(false)
+    } catch (error) {
+      // Handled by hook
     }
-  }, [createMascota, form, onOpenChange])
+  }, [createMascotaMutation, form, onOpenChange])
 
   return (
     <>
@@ -165,7 +161,7 @@ export default function AddMascotaModal({ open, onOpenChange }: AddMascotaModalP
                 <div className="p-4 bg-muted/50 rounded-lg">
                   <FormField
                     control={form.control}
-                    name="usuarioId"
+                    name="user_id"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-base font-semibold">Propietario</FormLabel>
@@ -174,7 +170,7 @@ export default function AddMascotaModal({ open, onOpenChange }: AddMascotaModalP
                             value={field.value}
                             onValueChange={field.onChange}
                             placeholder="Buscar propietario por nombre o DNI"
-                            disabled={isSubmitting}
+                            disabled={createMascotaMutation.isPending}
                           />
                         </FormControl>
                         <FormMessage />
@@ -189,7 +185,7 @@ export default function AddMascotaModal({ open, onOpenChange }: AddMascotaModalP
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
-                      name="nombre"
+                      name="name"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Nombre</FormLabel>
@@ -203,15 +199,15 @@ export default function AddMascotaModal({ open, onOpenChange }: AddMascotaModalP
 
                     <FormField
                       control={form.control}
-                      name="especie"
+                      name="species"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Especie</FormLabel>
                           <Select 
                             onValueChange={(value) => {
                               field.onChange(value)
-                              setEspecieSeleccionada(value)
-                              if (value !== "Otro") form.setValue("especieOtra", "")
+                              setSpeciesSelected(value)
+                              if (value !== "Otro") form.setValue("speciesOther", "")
                             }} 
                             value={field.value}
                           >
@@ -234,10 +230,10 @@ export default function AddMascotaModal({ open, onOpenChange }: AddMascotaModalP
                       )}
                     />
 
-                    {especieSeleccionada === "Otro" && (
+                    {speciesSelected === "Otro" && (
                       <FormField
                         control={form.control}
-                        name="especieOtra"
+                        name="speciesOther"
                         render={({ field }) => (
                           <FormItem className="sm:col-span-2">
                             <FormLabel>Especifica la especie</FormLabel>
@@ -252,7 +248,7 @@ export default function AddMascotaModal({ open, onOpenChange }: AddMascotaModalP
 
                     <FormField
                       control={form.control}
-                      name="raza"
+                      name="race"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Raza</FormLabel>
@@ -286,7 +282,7 @@ export default function AddMascotaModal({ open, onOpenChange }: AddMascotaModalP
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     <FormField
                       control={form.control}
-                      name="anios"
+                      name="years"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Años</FormLabel>
@@ -307,7 +303,7 @@ export default function AddMascotaModal({ open, onOpenChange }: AddMascotaModalP
 
                     <FormField
                       control={form.control}
-                      name="meses"
+                      name="months"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Meses</FormLabel>
@@ -328,7 +324,7 @@ export default function AddMascotaModal({ open, onOpenChange }: AddMascotaModalP
 
                     <FormField
                       control={form.control}
-                      name="sexo"
+                      name="gender"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Sexo</FormLabel>
@@ -350,7 +346,7 @@ export default function AddMascotaModal({ open, onOpenChange }: AddMascotaModalP
 
                     <FormField
                       control={form.control}
-                      name="condicionReproductiva"
+                      name="reproductive_condition"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Condición</FormLabel>
@@ -374,7 +370,7 @@ export default function AddMascotaModal({ open, onOpenChange }: AddMascotaModalP
 
                   <FormField
                     control={form.control}
-                    name="temperamento"
+                    name="temperament"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Temperamento</FormLabel>
@@ -408,16 +404,16 @@ export default function AddMascotaModal({ open, onOpenChange }: AddMascotaModalP
               type="button" 
               variant="outline" 
               onClick={() => onOpenChange(false)}
-              disabled={isSubmitting}
+              disabled={createMascotaMutation.isPending}
             >
               Cancelar
             </Button>
             <Button 
               type="button" 
-              disabled={isSubmitting || loading}
+              disabled={createMascotaMutation.isPending}
               onClick={handleSubmitWithConfirmation}
             >
-              {isSubmitting ? "Guardando..." : "Crear Mascota"}
+              {createMascotaMutation.isPending ? "Guardando..." : "Crear Mascota"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -431,7 +427,7 @@ export default function AddMascotaModal({ open, onOpenChange }: AddMascotaModalP
           message={options.message}
           buttons={options.buttons}
           onConfirm={handleConfirm}
-          loading={isSubmitting}
+          loading={createMascotaMutation.isPending}
         />
       )}
     </>

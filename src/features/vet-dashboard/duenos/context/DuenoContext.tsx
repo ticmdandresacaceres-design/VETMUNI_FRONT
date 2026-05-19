@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext } from "react";
-import useDuenos from "../hooks/useDuenos";
+import { useDuenos } from "../hooks/useDuenos";
 
 const DuenoContext = createContext<ReturnType<typeof useDuenos> | undefined>(undefined);
 

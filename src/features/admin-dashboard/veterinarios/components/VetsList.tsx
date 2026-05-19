@@ -31,14 +31,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { useVetContext } from "../context/VetContext"
-import { VetIfoTable } from "../types"
+import { useVeterinarios, useUpdateVeterinario } from "../hooks/useVet"
+import { Veterinario } from "../types"
 import { RegisterFormModal } from "./RegisterFormModal"
 
 export default function VetsList() {
-  const { veterinarians, loading, getVets, toggleVetStatus } = useVetContext()
+  const { data: veterinarians, isLoading: loading } = useVeterinarios()
+  const updateVetMutation = useUpdateVeterinario()
+  
   const [isToggleDialogOpen, setIsToggleDialogOpen] = useState(false)
-  const [vetToToggle, setVetToToggle] = useState<VetIfoTable | null>(null)
+  const [vetToToggle, setVetToToggle] = useState<Veterinario | null>(null)
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
 
@@ -46,28 +48,25 @@ export default function VetsList() {
     setIsMounted(true)
   }, [])
 
-  useEffect(() => {
-    if (isMounted) {
-      getVets()
-    }
-  }, [getVets, isMounted])
-
-  const handleToggleClick = (vet: VetIfoTable) => {
+  const handleToggleClick = (vet: Veterinario) => {
     setVetToToggle(vet)
     setIsToggleDialogOpen(true)
   }
 
   const handleToggleConfirm = async () => {
     if (vetToToggle) {
-      await toggleVetStatus(vetToToggle.id)
+      await updateVetMutation.mutateAsync({ 
+        id: vetToToggle.id, 
+        data: { active: !vetToToggle.active } 
+      })
       setIsToggleDialogOpen(false)
       setVetToToggle(null)
     }
   }
 
   // Badge para estado del usuario (activo/inactivo)
-  const getStatusBadge = (activo: boolean) => {
-    return activo ? (
+  const getStatusBadge = (active: boolean) => {
+    return active ? (
       <Badge variant="default" className="bg-grandient-to-r from-green-50 to-green-100 text-green-700 border border-green-200 dark:from-green-500/20 dark:to-green-500/10 dark:text-green-400 dark:border-green-500/30">
         <UserCheck className="mr-1 h-3 w-3" />
         Activo
@@ -80,9 +79,9 @@ export default function VetsList() {
     )
   }
 
-  // Badge para estado de la cuenta (bloqueada/funcionando)
-  const getAccountStatusBadge = (cuentaNoBloqueada: boolean) => {
-    return cuentaNoBloqueada ? (
+  // Badge para estado de la cuenta (bloqueada/funcionando) - Usaremos 'active' como referencia si no hay otro campo
+  const getAccountStatusBadge = (active: boolean) => {
+    return active ? (
       <Badge variant="default" className="bg-grandient-to-r from-emerald-50 to-emerald-100 text-emerald-700 border border-emerald-200 dark:from-emerald-500/20 dark:to-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/30">
         <Shield className="mr-1 h-3 w-3" />
         Funcionando
@@ -142,10 +141,17 @@ export default function VetsList() {
     )
   }
 
-  const validVeterinarians = Array.isArray(veterinarians) ? veterinarians.filter(vet => vet && vet.id) : []
+  const validVeterinarians = Array.isArray(veterinarians) ? veterinarians : []
 
   return (
     <>
+      {/* Botón para abrir modal de registro si es necesario */}
+      <div className="flex justify-end mb-4">
+        <Button onClick={() => setIsRegisterModalOpen(true)}>
+          Registrar Veterinario
+        </Button>
+      </div>
+
       {/* Tabla mejorada */}
       <div className="rounded-xl border border-border/50 bg-linear-to-br from-card/50 to-card backdrop-blur-sm shadow-lg overflow-hidden">
         <Table>
@@ -191,10 +197,10 @@ export default function VetsList() {
                     <div className="flex items-center gap-2">
                       <div className="h-8 w-8 rounded-full bg-linear-to-br from-primary/20 to-primary/10 flex items-center justify-center border border-primary/20">
                         <span className="text-xs font-medium text-primary">
-                          {vet.nombre?.charAt(0).toUpperCase() || 'V'}
+                          {vet.name?.charAt(0).toUpperCase() || 'V'}
                         </span>
                       </div>
-                      {vet.nombre || 'Sin nombre'}
+                      {vet.name || 'Sin nombre'}
                     </div>
                   </TableCell>
                   <TableCell>
@@ -206,17 +212,17 @@ export default function VetsList() {
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Mail className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">{vet.correo || 'Sin correo'}</span>
+                      <span className="text-sm">{vet.email || 'Sin correo'}</span>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Phone className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-mono text-sm">{vet.telefono || 'Sin teléfono'}</span>
+                      <span className="font-mono text-sm">{vet.phone || 'Sin teléfono'}</span>
                     </div>
                   </TableCell>
-                  <TableCell>{getStatusBadge(vet.activo)}</TableCell>
-                  <TableCell>{getAccountStatusBadge(vet.cuentaNoBloqueada)}</TableCell>
+                  <TableCell>{getStatusBadge(vet.active)}</TableCell>
+                  <TableCell>{getAccountStatusBadge(vet.active)}</TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -234,12 +240,12 @@ export default function VetsList() {
                         <DropdownMenuItem 
                           onClick={() => handleToggleClick(vet)}
                           className={`cursor-pointer ${
-                            vet.cuentaNoBloqueada 
+                            vet.active 
                               ? 'text-red-600 hover:text-red-700 focus:text-red-700' 
                               : 'text-green-600 hover:text-green-700 focus:text-green-700'
                           }`}
                         >
-                          {vet.cuentaNoBloqueada ? (
+                          {vet.active ? (
                             <>
                               <ShieldOff className="mr-2 h-4 w-4" />
                               Bloquear Cuenta
@@ -271,9 +277,9 @@ export default function VetsList() {
           <AlertDialogHeader>
             <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
             <AlertDialogDescription>
-              {vetToToggle?.cuentaNoBloqueada ? 'Bloquearás' : 'Desbloquearás'} la cuenta del veterinario{" "}
-              <strong>{vetToToggle?.nombre}</strong> (DNI: {vetToToggle?.dni}).
-              {vetToToggle?.cuentaNoBloqueada 
+              {vetToToggle?.active ? 'Bloquearás' : 'Desbloquearás'} la cuenta del veterinario{" "}
+              <strong>{vetToToggle?.name}</strong> (DNI: {vetToToggle?.dni}).
+              {vetToToggle?.active 
                 ? ' No podrá acceder al sistema una vez bloqueada la cuenta.' 
                 : ' Podrá acceder al sistema nuevamente.'}
             </AlertDialogDescription>
@@ -282,9 +288,10 @@ export default function VetsList() {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleToggleConfirm}
-              className={vetToToggle?.cuentaNoBloqueada ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}
+              className={vetToToggle?.active ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}
+              disabled={updateVetMutation.isPending}
             >
-              {vetToToggle?.cuentaNoBloqueada ? 'Bloquear Cuenta' : 'Desbloquear Cuenta'}
+              {updateVetMutation.isPending ? 'Procesando...' : (vetToToggle?.active ? 'Bloquear Cuenta' : 'Desbloquear Cuenta')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

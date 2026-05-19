@@ -26,17 +26,17 @@ import { Textarea } from "@/components/ui/textarea"
 import { ConfirmDialog } from "@/src/shared/components/ConfirmDialog"
 import { useConfirmDialog } from "@/src/shared/hooks/useConfirmDialog"
 import SelectorMap from "./SelectorMap"
-import { useDuenoContext } from "../context/DuenoContext"
-import { DuenoNewRequest } from "../types"
+import { useCreateDueno } from "../hooks/useDuenos"
+import { CreateDuenoRequest } from "../types"
 
 const formSchema = z.object({
-  nombre: z.string().min(1, "El nombre es requerido"),
+  name: z.string().min(1, "El nombre es requerido"),
   dni: z.string().min(6, "El DNI debe tener al menos 6 caracteres"),
-  correo: z.string().email("Email inválido"),
-  telefono: z.string().min(1, "El teléfono es requerido"),
-  direccion: z.string().min(1, "La dirección es requerida"),
-  latitud: z.string().optional(),
-  longitud: z.string().optional(),
+  email: z.string().email("Email inválido"),
+  phone: z.string().min(1, "El teléfono es requerido"),
+  address: z.string().min(1, "La dirección es requerida"),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
 })
 
 interface AddDuenoModalProps {
@@ -45,26 +45,23 @@ interface AddDuenoModalProps {
 }
 
 export default function AddDuenoModal({ open, onOpenChange }: AddDuenoModalProps) {
-  const { createDueno, loading } = useDuenoContext()
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const createDuenoMutation = useCreateDueno()
   const { isOpen, options, showConfirmDialog, hideConfirmDialog, handleConfirm } = useConfirmDialog()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      nombre: "",
+      name: "",
       dni: "",
-      correo: "",
-      telefono: "",
-      direccion: "",
-      latitud: "",
-      longitud: "",
+      email: "",
+      phone: "",
+      address: "",
     },
   })
 
   const handleMapPositionChange = (position: { lat: number; lng: number }) => {
-    form.setValue('latitud', position.lat.toString())
-    form.setValue('longitud', position.lng.toString())
+    form.setValue('latitude', position.lat)
+    form.setValue('longitude', position.lng)
   }
 
   const handleSubmitWithConfirmation = useCallback(async () => {
@@ -76,7 +73,7 @@ export default function AddDuenoModal({ open, onOpenChange }: AddDuenoModalProps
     showConfirmDialog(
       {
         title: "Confirmar registro",
-        message: `¿Estás seguro de crear el propietario "${values.nombre}" con DNI ${values.dni}?\n\nEsta acción creará una nueva cuenta de usuario.`,
+        message: `¿Estás seguro de crear el propietario "${values.name}" con DNI ${values.dni}?\n\nEsta acción creará una nueva cuenta de usuario.`,
         buttons: {
           cancel: "Revisar",
           confirm: "Sí, crear"
@@ -88,28 +85,26 @@ export default function AddDuenoModal({ open, onOpenChange }: AddDuenoModalProps
 
   const handleSubmit = useCallback(async () => {
     const values = form.getValues()
-    setIsSubmitting(true)
     try {
-      const payload: DuenoNewRequest = {
-        nombre: values.nombre,
+      const payload: CreateDuenoRequest = {
+        name: values.name,
         dni: values.dni,
-        correo: values.correo,
-        telefono: values.telefono,
-        direccion: values.direccion,
+        email: values.email,
+        phone: values.phone,
+        address: values.address,
         password: values.dni,
-        latitud: values.latitud || "",
-        longitud: values.longitud || "",
+        latitude: values.latitude,
+        longitude: values.longitude,
+        active: true
       }
 
-      const success = await createDueno(payload)
-      if (success) {
-        form.reset()
-        onOpenChange(false)
-      }
-    } finally {
-      setIsSubmitting(false)
+      await createDuenoMutation.mutateAsync(payload)
+      form.reset()
+      onOpenChange(false)
+    } catch (error) {
+      // Error handling is managed by the hook
     }
-  }, [createDueno, form, onOpenChange])
+  }, [createDuenoMutation, form, onOpenChange])
 
   return (
     <>
@@ -134,7 +129,7 @@ export default function AddDuenoModal({ open, onOpenChange }: AddDuenoModalProps
                       {/* Nombre */}
                       <FormField
                         control={form.control}
-                        name="nombre"
+                        name="name"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Nombre Completo</FormLabel>
@@ -163,7 +158,7 @@ export default function AddDuenoModal({ open, onOpenChange }: AddDuenoModalProps
                         />
                         <FormField
                           control={form.control}
-                          name="telefono"
+                          name="phone"
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Teléfono</FormLabel>
@@ -179,7 +174,7 @@ export default function AddDuenoModal({ open, onOpenChange }: AddDuenoModalProps
                       {/* Correo */}
                       <FormField
                         control={form.control}
-                        name="correo"
+                        name="email"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Correo Electrónico</FormLabel>
@@ -194,7 +189,7 @@ export default function AddDuenoModal({ open, onOpenChange }: AddDuenoModalProps
                       {/* Dirección */}
                       <FormField
                         control={form.control}
-                        name="direccion"
+                        name="address"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Dirección</FormLabel>
@@ -229,16 +224,16 @@ export default function AddDuenoModal({ open, onOpenChange }: AddDuenoModalProps
               type="button" 
               variant="outline" 
               onClick={() => onOpenChange(false)}
-              disabled={isSubmitting}
+              disabled={createDuenoMutation.isPending}
             >
               Cancelar
             </Button>
             <Button 
               type="button" 
-              disabled={isSubmitting || loading}
+              disabled={createDuenoMutation.isPending}
               onClick={handleSubmitWithConfirmation}
             >
-              {isSubmitting ? "Guardando..." : "Crear Dueño"}
+              {createDuenoMutation.isPending ? "Guardando..." : "Crear Dueño"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -252,7 +247,7 @@ export default function AddDuenoModal({ open, onOpenChange }: AddDuenoModalProps
           message={options.message}
           buttons={options.buttons}
           onConfirm={handleConfirm}
-          loading={isSubmitting}
+          loading={createDuenoMutation.isPending}
         />
       )}
     </>

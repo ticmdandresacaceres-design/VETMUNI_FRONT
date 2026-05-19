@@ -7,20 +7,17 @@ import { tokenStorage } from "./token-storage";
 export class ApiError extends Error {
     public status?: number;
     public data?: ApiErrorResponse;
-    
+
     constructor(message: string, status?: number, data?: ApiErrorResponse) {
         super(message);
         this.name = "ApiError";
         this.status = status;
-        this.data = data;   
+        this.data = data;
     }
 }
 
-
-const apiClient = axios.create({baseURL: "https://vetmuniback-production.up.railway.app/api/v1"});
-
 // Para ejecuciones locales spring boot
-//const apiClient = axios.create({baseURL: "http://localhost:8080/api/v1"});
+const apiClient = axios.create({ baseURL: "http://127.0.0.1:8000/api" });
 
 // Interceptor de solicitud para agregar tokens de autenticación 
 apiClient.interceptors.request.use(
@@ -46,7 +43,7 @@ apiClient.interceptors.response.use(
         // Si el error tiene respuesta del servidor
         if (error.response) {
             const { status, data } = error.response;
-            
+
             // Crear el objeto ApiErrorResponse
             const apiErrorData: ApiErrorResponse = {
                 timestamp: data?.timestamp || new Date().toISOString(),
@@ -56,70 +53,67 @@ apiClient.interceptors.response.use(
                 path: data?.path || error.config?.url || 'unknown',
                 details: data?.details || null
             };
-            
+
             // Manejar errores 401
             if (status === 401) {
                 const isLoginEndpoint = error.config?.url?.includes('/auth/login') || false;
                 const message = data?.message?.toLowerCase() || '';
                 const errorType = data?.error || '';
-                
+
                 // Verificar si es cuenta bloqueada
-                const isBlocked = message.includes('bloqueada') || 
-                                message.includes('blocked') ||
-                                (errorType === 'InvalidCredentials' && message.includes('bloqueada'));
-                
+                const isBlocked = message.includes('bloqueada') ||
+                    message.includes('blocked') ||
+                    (errorType === 'InvalidCredentials' && message.includes('bloqueada'));
+
                 if (isBlocked) {
                     // Cuenta bloqueada - Mostrar toast aquí
                     toast.error(data?.message || "Tu cuenta ha sido bloqueada. Contacta al administrador.", {
                         duration: 5000,
                         position: "bottom-right",
                     });
-                    
+
                     // Lanzar el error para que el servicio lo maneje
                     throw new ApiError(apiErrorData.message || "Error de autenticación", status, apiErrorData);
                 }
-                
-                // Si es login endpoint, mostrar el error específico
-                if (isLoginEndpoint) {
-                    toast.error(data?.message || "Credenciales inválidas. Verifica tu email y contraseña.", {
-                        duration: 4000,
-                        position: "bottom-right",
-                    });
-                } else {
-                    // Token expirado o credenciales inválidas (pero NO es login)
+                if (!isLoginEndpoint) {
                     tokenStorage.clearAll();
-                    
+
                     toast.error("Tu sesión ha expirado. Por favor, inicia sesión nuevamente.", {
                         duration: 4000,
                         position: "bottom-right"
                     });
-                    
+
                     setTimeout(() => {
                         window.location.href = '/login';
                     }, 1000);
+                } else {
+                    toast.error(data?.message || "Credenciales inválidas. Verifica tu email y contraseña.", {
+                        duration: 4000,
+                        position: "bottom-right",
+                    });
                 }
-                
+
                 // Lanzar el error
                 throw new ApiError(apiErrorData.message || "Error de autenticación", status, apiErrorData);
             }
-            
+
             // Manejar errores 403
             if (status === 403) {
                 const message = data?.message?.toLowerCase() || '';
-                
-                const isBlocked = message.includes('bloqueada') || 
-                                message.includes('blocked') || 
-                                message.includes('deshabilitada') ||
-                                message.includes('disabled');
-                
+
+                const isBlocked = message.includes('bloqueada') ||
+                    message.includes('blocked') ||
+                    message.includes('deshabilitada') ||
+                    message.includes('disabled');
+
                 if (isBlocked) {
                     tokenStorage.clearAll();
-                    
+
                     toast.error("Tu cuenta ha sido bloqueada. Contacta al administrador.", {
                         duration: 5000,
                         position: "bottom-right",
                     });
-                    
+
                     setTimeout(() => {
                         window.location.href = '/login';
                     }, 1500);
@@ -129,25 +123,25 @@ apiClient.interceptors.response.use(
                         position: "bottom-right"
                     });
                 }
-                
+
                 throw new ApiError(apiErrorData.message || "Error de acceso denegado", status, apiErrorData);
             }
-            
+
             // Otros errores del servidor
             throw new ApiError(
                 apiErrorData.message || "Error en la API",
                 status,
                 apiErrorData
             );
-        } 
-        
+        }
+
         // Error de conexión
         if (error.request) {
             toast.error("No se pudo conectar al servidor. Verifica tu conexión.", {
                 duration: 4000,
                 position: "bottom-right"
             });
-            
+
             throw new ApiError(
                 "Error de conexión - no se pudo conectar al servidor",
                 0,
@@ -159,8 +153,8 @@ apiClient.interceptors.response.use(
                     path: error.config?.url || 'unknown'
                 }
             );
-        } 
-        
+        }
+
         // Error al configurar la petición
         throw new ApiError(
             error.message || "Error desconocido",

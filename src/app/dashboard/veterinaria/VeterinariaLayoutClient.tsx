@@ -85,7 +85,7 @@ export default function VeterinariaLayoutClient({ children }: VeterinariaLayoutP
 
   const handleLogout = async () => {
     setIsLoggingOut(true)
-    
+
     try {
       await logout()
       toast.success("Sesión cerrada exitosamente")
@@ -175,10 +175,10 @@ export default function VeterinariaLayoutClient({ children }: VeterinariaLayoutP
           {sidebarNavItems.map((item) => {
             const Icon = item.icon
             // Comparación exacta para el dashboard, con subpaths para los demás
-            const isActive = item.href === "/dashboard/veterinaria" 
-              ? pathname === item.href 
+            const isActive = item.href === "/dashboard/veterinaria"
+              ? pathname === item.href
               : pathname === item.href || pathname.startsWith(item.href + '/')
-            
+
             return (
               <Link
                 key={item.href}
@@ -194,8 +194,8 @@ export default function VeterinariaLayoutClient({ children }: VeterinariaLayoutP
               >
                 <div className={cn(
                   "w-9 h-9 rounded-lg flex items-center justify-center transition-colors",
-                  isActive 
-                    ? "bg-primary/20 text-primary" 
+                  isActive
+                    ? "bg-primary/20 text-primary"
                     : "bg-muted/50 text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary"
                 )}>
                   <Icon className="h-4 w-4 shrink-0" />
@@ -220,15 +220,15 @@ export default function VeterinariaLayoutClient({ children }: VeterinariaLayoutP
         <div className="flex items-center gap-3 p-3 rounded-xl bg-background hover:bg-accent transition-colors cursor-pointer">
           <Avatar className="h-10 w-10 ring-2 ring-primary/20">
             <AvatarFallback className="bg-linear-to-br from-primary/20 to-primary/10 text-primary font-semibold">
-              {user?.nombre ? getUserInitials(user.nombre) : 'VT'}
+              {user?.name ? getUserInitials(user.name) : 'VT'}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">
-              {user?.nombre || 'Usuario'}
+              {user?.name || 'Usuario'}
             </p>
             <p className="text-xs text-muted-foreground truncate">
-              {user?.correo || 'email@veterinaria.com'}
+              {user?.email || 'email@veterinaria.com'}
             </p>
           </div>
         </div>
@@ -237,7 +237,7 @@ export default function VeterinariaLayoutClient({ children }: VeterinariaLayoutP
   )
 
   return (
-    <AuthGuard requiredRoles={['VETERINARIA', 'ADMIN']}>
+    <AuthGuard requiredRoles={['VETERINARIAN', 'ADMIN']}>
       <div className="flex h-screen overflow-hidden">
         {/* Desktop Sidebar */}
         <aside className="hidden w-72 flex-col border-r lg:flex">
@@ -272,7 +272,7 @@ export default function VeterinariaLayoutClient({ children }: VeterinariaLayoutP
                   <h1 className="text-lg font-semibold">Panel Veterinario</h1>
                 </div>
                 <Badge variant="secondary" className="hidden md:flex">
-                  {user?.roles || 'Veterinaria'}
+                  {Array.isArray(user?.role) ? user.role.join(', ') : user?.role || 'Veterinaria'}
                 </Badge>
               </div>
 
@@ -283,13 +283,13 @@ export default function VeterinariaLayoutClient({ children }: VeterinariaLayoutP
                 {/* User Menu */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       className="relative h-9 w-9 rounded-full ring-2 ring-transparent hover:ring-primary/30 transition-all duration-200"
                     >
                       <Avatar className="h-9 w-9">
                         <AvatarFallback className="bg-linear-to-br from-primary/20 to-primary/10 text-primary font-semibold">
-                          {user?.nombre ? getUserInitials(user.nombre) : 'VT'}
+                          {user?.name ? getUserInitials(user.name) : 'VT'}
                         </AvatarFallback>
                       </Avatar>
                     </Button>
@@ -300,26 +300,26 @@ export default function VeterinariaLayoutClient({ children }: VeterinariaLayoutP
                         <div className="flex items-center gap-3">
                           <Avatar className="h-12 w-12">
                             <AvatarFallback className="bg-linear-to-br from-primary/20 to-primary/10 text-primary font-bold text-lg">
-                              {user?.nombre ? getUserInitials(user.nombre) : 'VT'}
+                              {user?.name ? getUserInitials(user.name) : 'VT'}
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-semibold truncate">
-                              {user?.nombre || 'Usuario'}
+                              {user?.name || 'Usuario'}
                             </p>
                             <p className="text-xs text-muted-foreground truncate">
-                              {user?.correo || 'email@veterinaria.com'}
+                              {user?.email || 'email@veterinaria.com'}
                             </p>
                           </div>
                         </div>
                         <Badge variant="outline" className="w-fit text-xs">
                           <Stethoscope className="h-3 w-3 mr-1" />
-                          Rol: {user?.roles || 'Veterinaria'}
+                          Rol: {Array.isArray(user?.role) ? user.role.join(', ') : user?.role || 'Veterinaria'}
                         </Badge>
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem 
+                    <DropdownMenuItem
                       className="text-destructive hover:text-destructive focus:text-destructive cursor-pointer"
                       onClick={handleLogout}
                       disabled={isLoggingOut}

@@ -3,12 +3,12 @@
 import { Button } from "@/components/ui/button";
 import { CreditCard } from "lucide-react";
 import { useState } from "react";
-import { MascotaPageDetails } from "../types";
+import type { Mascota } from "../types";
 import { generateMascotaPDF } from "@/src/lib/utils/dim-generador";
 import { toast } from "sonner";
 
 interface GeneratePDFButtonProps {
-    mascotaData: MascotaPageDetails;
+    mascotaData: Mascota;
     variant?: "default" | "outline" | "secondary" | "ghost" | "link" | "destructive";
     size?: "default" | "sm" | "lg" | "icon";
 }

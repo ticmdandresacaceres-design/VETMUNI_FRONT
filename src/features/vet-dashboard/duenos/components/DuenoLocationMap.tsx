@@ -4,16 +4,16 @@ import { Map, MapTileLayer, MapMarker, MapPopup } from '@/components/ui/map';
 import { Home, MapPin } from 'lucide-react';
 
 interface DuenoLocationMapProps {
-  latitud: string;
-  longitud: string;
+  latitud: number;
+  longitud: number;
   nombre: string;
   direccion: string;
   className?: string;
 }
 
 function DuenoLocationMap({ latitud, longitud, nombre, direccion, className = '' }: DuenoLocationMapProps) {
-  const lat = parseFloat(latitud);
-  const lng = parseFloat(longitud);
+  const lat = latitud;
+  const lng = longitud;
 
   // Validar coordenadas
   if (isNaN(lat) || isNaN(lng)) {
