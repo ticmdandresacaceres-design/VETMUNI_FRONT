@@ -10,10 +10,10 @@ export function StatsSection({ stats }: StatsSectionProps) {
       <div className="bg-linear-to-br from-primary to-primary/90 rounded-3xl p-8 lg:p-16 text-primary-foreground shadow-2xl">
         <div className="text-center mb-12">
           <h2 className="text-3xl lg:text-5xl font-bold mb-4">
-            Vecinos que ya confían en nosotros
+            Cifras del sistema municipal
           </h2>
           <p className="text-lg opacity-90">
-            Únete a nuestra comunidad de dueños responsables
+            Mascotas registradas y atenciones realizadas a través del sistema
           </p>
         </div>
 

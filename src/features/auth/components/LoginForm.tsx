@@ -29,17 +29,7 @@ export const LoginForm = () => {
         try {
             const response = await login(formData);
             toast.success(`¡Bienvenido de nuevo, ${response.user.name}!`);
-            // Redirigir según el rol del usuario
-            const userRoles = response.user.role;
-
-            if (userRoles.includes("ADMIN")) {
-                router.push("/dashboard/admin");
-            } else if (userRoles.includes("VETERINARIAN")) {
-                router.push("/dashboard/veterinaria");
-            } else {
-                // Rol por defecto o sin roles específicos
-                router.push("/dashboard");
-            }
+            router.push("/dashboard");
 
         } catch (error: any) {
             console.error("Login error:", error);

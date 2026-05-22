@@ -12,11 +12,11 @@ export function BenefitsSection({ benefits }: BenefitsSectionProps) {
       <div className="text-center mb-16">
         <Badge className="mb-4 text-sm px-4 py-1">Beneficios del Sistema</Badge>
         <h2 className="text-3xl lg:text-5xl font-bold mb-4">
-          ¿Por qué registrar a tu mascota?
+          Beneficios del Sistema
         </h2>
         <p className="text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-          Servicios veterinarios 100% gratuitos para todos los vecinos. Solo necesitas 
-          registrar a tu mascota una vez y acceder a todos los beneficios
+          Un sistema de gestión integral que permite a la municipalidad llevar un control
+          ordenado de la población animal y brindar una mejor atención a los vecinos
         </p>
       </div>
       

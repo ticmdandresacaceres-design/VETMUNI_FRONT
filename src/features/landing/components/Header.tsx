@@ -29,6 +29,7 @@ export function Header({ onNavigate }: HeaderProps) {
               src="/images/landing/logo-muni.webp"
               alt="Logo Municipalidad Veterinaria"
               fill
+              sizes="192px"
               className="object-contain object-left"
               priority
             />

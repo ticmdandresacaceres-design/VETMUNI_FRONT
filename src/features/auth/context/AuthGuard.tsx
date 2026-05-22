@@ -255,7 +255,7 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
                                     Volver
                                 </Button>
                                 <Button 
-                                    onClick={() => router.push('/dashboard/veterinaria')}
+                                    onClick={() => router.push('/dashboard')}
                                     className="flex-1"
                                 >
                                     <Home className="mr-2 h-4 w-4" />

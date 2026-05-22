@@ -14,6 +14,7 @@ export function Footer() {
                                 src="/images/landing/logo-muni.webp"
                                 alt="Municipalidad Distrital Andrés Avelino Cáceres Dorregaray"
                                 fill
+                                sizes="(max-width: 768px) 100vw, 280px"
                                 className="object-contain object-center md:object-left"
                             />
                         </div>
@@ -27,13 +28,14 @@ export function Footer() {
                         <div className="relative h-20 w-full max-w-60">
                             <Image
                                 src="/images/landing/logo-alcalde.webp"
-                                alt="Edwin Gavilán - Alcalde"
+                                alt="Alcalde Edwin Gavilán"
                                 fill
+                                sizes="(max-width: 768px) 100vw, 240px"
                                 className="object-contain"
                             />
                         </div>
                         <p className="text-xs text-muted-foreground text-center">
-                            Gestión 2023 - 2026
+                            Alcalde
                         </p>
                     </div>
 
@@ -42,8 +44,9 @@ export function Footer() {
                         <div className="relative h-20 w-full max-w-[200px]">
                             <Image
                                 src="/images/landing/logo-gestion.webp"
-                                alt="Gestión Para Todos 2023-2026"
+                                alt="Gestión Para Todos"
                                 fill
+                                sizes="(max-width: 768px) 100vw, 200px"
                                 className="object-contain object-center md:object-right bg-gray-800 "
                             />
                         </div>

@@ -4,73 +4,46 @@ import {
   Stethoscope,
   FileText,
   Bell,
-  Heart,
-  Users,
   QrCode,
+  Users,
   PawPrint,
   TrendingUp,
   Clock,
+  Map,
+  Database,
 } from "lucide-react";
-import { Campaign, Benefit, Step, Stat, Feature } from "../types";
-
-export const campaigns: Campaign[] = [
-  {
-    title: "Campaña de Vacunación 2026 ",
-    subtitle: "Diciembre 2025",
-    description: "Vacuna antirrábica gratuita para todas las mascotas registradas",
-    date: "Todo el mes",
-    badge: "Activa",
-    image: "/images/campains/vacunacion.webp"
-  },
-  {
-    title: "Registro Gratuito para nuevas mascotas",
-    subtitle: "Promoción Especial",
-    description: "Registra a tu mascota sin costo durante este mes",
-    date: "Hasta el 30 Dic",
-    badge: "Última semana",
-    image: "/images/campains/registro.webp"
-  },
-  {
-    title: "Esterilización a Bajo Costo",
-    subtitle: "Campaña Municipal",
-    description: "Programa de esterilización con descuento del 70%",
-    date: "Próximamente",
-    badge: "Próxima",
-    image: "/images/campains/esterilizacion.webp"
-  }
-  
-];
+import { Benefit, Step, Stat, Feature } from "../types";
 
 export const benefits: Benefit[] = [
   {
     icon: Shield,
-    title: "Carnet con QR Oficial",
-    description: "Tu mascota tendrá un carnet digital con código QR único de identificación municipal."
+    title: "Registro Oficial Municipal",
+    description: "Cada mascota obtiene un carnet digital con código QR único, respaldado por el municipio."
   },
   {
     icon: Syringe,
-    title: "Vacunación Gratuita",
-    description: "Acceso a todas las campañas de vacunación antirrábica completamente gratis."
+    title: "Control de Vacunación",
+    description: "Seguimiento del calendario de vacunación con alertas automáticas para mantener al día a cada mascota."
   },
   {
     icon: Stethoscope,
-    title: "Atención Veterinaria Gratis",
-    description: "Consultas, tratamientos y emergencias sin costo en nuestro centro municipal."
+    title: "Atención Veterinaria",
+    description: "Servicios de consulta, diagnóstico y tratamiento en el centro de atención municipal."
   },
   {
     icon: FileText,
-    title: "Historial Completo",
-    description: "Guardamos todo el historial médico de tu mascota en nuestro sistema."
+    title: "Historial Clínico Digital",
+    description: "Registro completo del historial médico de cada mascota, accesible en todo momento."
   },
   {
     icon: Bell,
-    title: "Te Avisamos",
-    description: "Nosotros te recordamos cuando es hora de vacunas o controles."
+    title: "Recordatorio Automático",
+    description: "El sistema notifica a los propietarios cuando una mascota requiere vacuna o control."
   },
   {
-    icon: Heart,
-    title: "100% Gratuito",
-    description: "Todos los servicios veterinarios municipales son completamente gratis."
+    icon: Database,
+    title: "Gestión Municipal Centralizada",
+    description: "Base de datos unificada que permite a la municipalidad llevar un control ordenado de la población animal."
   }
 ];
 
@@ -78,26 +51,26 @@ export const steps: Step[] = [
   {
     step: "1",
     icon: Users,
-    title: "Visita el Centro",
-    description: "Acércate a nuestra oficina municipal con tu mascota"
+    title: "Visita el Centro Municipal",
+    description: "Acércate a nuestras oficinas con tu mascota para iniciar el proceso"
   },
   {
     step: "2",
     icon: FileText,
-    title: "Completa el Registro",
-    description: "Llena un formulario simple con los datos de tu mascota"
+    title: "Registro en el Sistema",
+    description: "El personal municipal registra los datos de la mascota y su propietario"
   },
   {
     step: "3",
     icon: QrCode,
-    title: "Recibe tu Carnet",
-    description: "Obtén el carnet digital con QR de identificación"
+    title: "Carnet Digital",
+    description: "Recibes un carnet con código QR que identifica a tu mascota oficialmente"
   },
   {
     step: "4",
-    icon: Heart,
-    title: "Recibe Atención Gratis",
-    description: "Trae a tu mascota cuando necesite. Todo es gratis"
+    icon: Bell,
+    title: "Seguimiento Continuo",
+    description: "El sistema te mantiene informado sobre vacunas y controles pendientes"
   }
 ];
 
@@ -110,9 +83,9 @@ export const stats: Stat[] = [
 
 export const features: Feature[] = [
   { icon: Shield, title: "Sistema", subtitle: "Seguro" },
-  { icon: Clock, title: "Atención", subtitle: "Rápida" },
+  { icon: Clock, title: "Atención", subtitle: "Eficiente" },
   { icon: Stethoscope, title: "Servicio", subtitle: "Profesional" },
-  { icon: Heart, title: "Trato", subtitle: "Humanizado" }
+  { icon: Map, title: "Cobertura", subtitle: "Distrital" }
 ];
 
 export const commitments = [

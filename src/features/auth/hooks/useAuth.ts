@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { AuthState, LoginRequest, User } from '../types';
-import * as AuthService from '../service/AuthService';
+import * as AuthService from '../services/AuthService';
 import { tokenStorage } from '@/src/lib/api/token-storage';
 
 export const useAuth = () => {

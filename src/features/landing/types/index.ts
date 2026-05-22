@@ -1,12 +1,3 @@
-export interface Campaign {
-  title: string;
-  subtitle: string;
-  description: string;
-  date: string;
-  badge: string;
-  image: string;
-}
-
 export interface Benefit {
   icon: React.ComponentType<{ className?: string }>;
   title: string;

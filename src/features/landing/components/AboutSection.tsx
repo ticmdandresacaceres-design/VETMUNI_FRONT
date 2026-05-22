@@ -16,11 +16,12 @@ export function AboutSection({ commitments, features }: AboutSectionProps) {
           <div>
             <Badge className="mb-6 text-sm px-4 py-1">Nuestro Compromiso</Badge>
             <h2 className="text-3xl lg:text-5xl font-bold mb-6">
-              Cuidamos la salud de tus mascotas
+              Un sistema al servicio del distrito
             </h2>
             <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-              Como municipalidad, nos comprometemos a brindar servicios veterinarios 
-              accesibles y de calidad para todas las familias de nuestra comunidad.
+              Este sistema de gestión veterinaria permite a la municipalidad centralizar
+              la información de la población animal, optimizar los recursos y brindar
+              un servicio más eficiente a todos los vecinos del distrito.
             </p>
             
             <div className="space-y-4">

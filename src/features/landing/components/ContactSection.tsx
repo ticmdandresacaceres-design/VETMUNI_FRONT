@@ -20,10 +20,10 @@ export function ContactSection({ contactInfo }: ContactSectionProps) {
         <div className="bg-linear-to-r from-primary via-primary to-primary/90 p-8 lg:p-16 text-primary-foreground">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-3xl lg:text-5xl font-bold mb-6">
-              ¿Listo para registrar a tu mascota?
+              Visita nuestro centro municipal
             </h2>
             <p className="text-xl mb-8 opacity-90 leading-relaxed">
-              Ven a registrar a tu mascota y accede a todos nuestros servicios veterinarios gratuitos
+              Acércate a nuestras oficinas para registrar a tu mascota y conocer más sobre el sistema
             </p>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -58,7 +58,7 @@ export function ContactSection({ contactInfo }: ContactSectionProps) {
             </div>
             <p className="text-sm mt-6 opacity-90 flex items-center justify-center gap-2">
               <Heart className="h-4 w-4" />
-              Todos los servicios son 100% gratuitos para vecinos del distrito
+              Sistema de Gestión Veterinaria - Municipalidad Distrital Andrés Avelino Cáceres Dorregaray
             </p>
           </div>
         </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { Header } from "@/src/features/landing/components/Header";
-import { HeroCarousel } from "../features/landing/components/HeroCarrusel";
+import { HeroSection } from "../features/landing/components/HeroCarrusel";
 import { BenefitsSection } from "@/src/features/landing/components/BenefitsSection";
 import { HowItWorksSection } from "../features/landing/components/HowItWorkSection";
 import { StatsSection } from "@/src/features/landing/components/StatsSection";
@@ -9,7 +9,6 @@ import { AboutSection } from "@/src/features/landing/components/AboutSection";
 import { ContactSection } from "@/src/features/landing/components/ContactSection";
 import { Footer } from "@/src/features/landing/components/Footer";
 import { 
-  campaigns, 
   benefits, 
   steps, 
   stats, 
@@ -29,7 +28,7 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       <Header onNavigate={scrollToSection} />
-      <HeroCarousel campaigns={campaigns} onNavigate={scrollToSection} />
+      <HeroSection onNavigate={scrollToSection} />
       <BenefitsSection benefits={benefits} />
       <HowItWorksSection steps={steps} onNavigate={scrollToSection} />
       <StatsSection stats={stats} />

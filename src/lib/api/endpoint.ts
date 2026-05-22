@@ -12,8 +12,8 @@ export const ENDPOINTS = {
     veterinarians: {
       list: "users/veterinarians",
       create: "users/veterinarians",
-      update: (id: string) => `/users/veterinarians/${id}`,
-      delete: (id: string) => `/users/veterinarians/${id}`,
+      update: (id: string) => `/users/${id}`,
+      delete: (id: string) => `/users/${id}`,
     },
     owners: {
       list: "users/owners",
@@ -31,6 +31,8 @@ export const ENDPOINTS = {
     getById: (id: string) => `/pets/${id}`,
     update: (id: string) => `/pets/${id}`,
     delete: (id: string) => `/pets/${id}`,
+    byOwner: (ownerId: string) => `/pets/owner/${ownerId}`,
+    search: "/pets/search"
   },
 
   // Rutas de imágenes de mascotas

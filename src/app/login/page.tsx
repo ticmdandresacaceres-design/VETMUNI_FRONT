@@ -19,6 +19,7 @@ function LoginPage() {
                                     src="/images/landing/logo-muni.webp"
                                     alt="Municipalidad Distrital Andrés Avelino Cáceres Dorregaray"
                                     fill
+                                    sizes="(max-width: 1024px) 100vw, 320px"
                                     className="object-contain object-center lg:object-left"
                                     priority
                                 />

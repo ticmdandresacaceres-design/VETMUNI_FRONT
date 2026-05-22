@@ -1,7 +1,10 @@
 import React from 'react';
 import { Document, Page, Text, View, Image, StyleSheet, pdf } from '@react-pdf/renderer';
 import QRCode from 'qrcode';
-import type { Mascota } from '@/src/features/vet-dashboard/mascotas/types';
+import type { Mascota } from '@/src/features/patients/types';
+
+// Placeholder image used when mascota photo is not available
+const placeholderImg = '/images/dim/placeholder.png';
 
 const styles = StyleSheet.create({
   page: {
@@ -98,50 +101,50 @@ const MascotaCard = ({ data, qrDataUrl, bgUrl }: { data: Mascota, qrDataUrl: str
 
         <View style={styles.mainContainer}>
           <View style={styles.photoContainer}>
-            <Image src="/placeholder.png" style={styles.photo} />
+            <Image src={placeholderImg} style={styles.photo} />
           </View>
 
           <View style={styles.infoContainer}>
             <View style={styles.row}>
-                <Text style={styles.label}>NOMBRE:</Text>
-                <Text style={styles.nameValue}>{truncate(data.name.toUpperCase(), 14)}</Text>
+              <Text style={styles.label}>NOMBRE:</Text>
+              <Text style={styles.nameValue}>{truncate(data.name.toUpperCase(), 14)}</Text>
             </View>
 
             <View style={styles.row}>
-                <Text style={styles.label}>CÓDIGO:</Text>
-                <Text style={styles.idValue}>{data.id}</Text>
+              <Text style={styles.label}>CÓDIGO:</Text>
+              <Text style={styles.idValue}>{data.id}</Text>
             </View>
 
             <View style={styles.row}>
-                <Text style={styles.label}>ESPECIE:</Text>
-                <Text style={styles.value}>{truncate(data.species.toUpperCase(), 15)}</Text>
+              <Text style={styles.label}>ESPECIE:</Text>
+              <Text style={styles.value}>{truncate(data.species.toUpperCase(), 15)}</Text>
             </View>
 
             <View style={styles.row}>
-                <Text style={styles.label}>RAZA:</Text>
-                <Text style={styles.value}>{truncate(data.race.toUpperCase(), 16)}</Text>
+              <Text style={styles.label}>RAZA:</Text>
+              <Text style={styles.value}>{truncate(data.race.toUpperCase(), 16)}</Text>
             </View>
 
             <View style={styles.row}>
-                <Text style={styles.label}>SEXO:</Text>
-                <Text style={styles.value}>{truncate(data.gender.toUpperCase(), 15)}</Text>
+              <Text style={styles.label}>SEXO:</Text>
+              <Text style={styles.value}>{truncate(data.gender.toUpperCase(), 15)}</Text>
             </View>
 
             <View style={styles.row}>
-                <Text style={styles.label}>COLOR:</Text>
-                <Text style={styles.value}>{truncate(data.color.toUpperCase(), 15)}</Text>
+              <Text style={styles.label}>COLOR:</Text>
+              <Text style={styles.value}>{truncate(data.color.toUpperCase(), 15)}</Text>
             </View>
 
             <View style={styles.row}>
-                <Text style={styles.label}>EDAD:</Text>
-                <Text style={styles.value}>{data.years}a {data.months}m</Text>
+              <Text style={styles.label}>EDAD:</Text>
+              <Text style={styles.value}>{data.age}</Text>
             </View>
           </View>
 
           <View style={styles.qrContainer}>
-             {qrDataUrl && <Image src={qrDataUrl} style={styles.qrImage} />}
-             <Text style={styles.qrText}>Escanea para</Text>
-             <Text style={styles.qrText}>verificar</Text>
+            {qrDataUrl && <Image src={qrDataUrl} style={styles.qrImage} />}
+            <Text style={styles.qrText}>Escanea para</Text>
+            <Text style={styles.qrText}>verificar</Text>
           </View>
         </View>
       </Page>
@@ -162,9 +165,9 @@ export const generateMascotaPDF = async (data: Mascota): Promise<void> => {
       `;
 
     const qrDataUrl = await QRCode.toDataURL(textoQR, {
-        margin: 0,
-        color: { dark: '#000000', light: '#FFFFFF' },
-        errorCorrectionLevel: 'L'
+      margin: 0,
+      color: { dark: '#000000', light: '#FFFFFF' },
+      errorCorrectionLevel: 'L'
     });
 
     const bgUrl = '/images/dim/dim-base.png';

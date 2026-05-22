@@ -14,7 +14,7 @@ interface ConfirmDialogOptions {
 export function useConfirmDialog() {
   const [isOpen, setIsOpen] = useState(false)
   const [options, setOptions] = useState<ConfirmDialogOptions | null>(null)
-  const [onConfirm, setOnConfirm] = useState<(() => void) | null>(null)
+  const [onConfirm, setOnConfirm] = useState<((() => void) | (() => Promise<void>)) | null>(null)
 
   const showConfirmDialog = (dialogOptions: ConfirmDialogOptions, confirmCallback: () => void) => {
     setOptions(dialogOptions)
@@ -28,9 +28,9 @@ export function useConfirmDialog() {
     setOnConfirm(null)
   }
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (onConfirm) {
-      onConfirm()
+      await onConfirm()
     }
     hideConfirmDialog()
   }
