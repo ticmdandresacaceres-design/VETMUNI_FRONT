@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import * as VacunaService from "../services/VacunaService";
 import { CreateVacunaRequest, UpdateVacunaRequest } from "../types";
 import { toast } from "sonner";
@@ -15,6 +15,7 @@ export const useVacunas = (params?: VacunaService.GetVacunasParams) => {
   return useQuery({
     queryKey: vacunaKeys.lists(params),
     queryFn: () => VacunaService.getVacunas(params),
+    placeholderData: keepPreviousData,
   });
 };
 
@@ -39,8 +40,9 @@ export const useCreateVacuna = () => {
 
   return useMutation({
     mutationFn: (data: CreateVacunaRequest) => VacunaService.createVacuna(data),
-    onSuccess: (newVacuna) => {
-      queryClient.invalidateQueries({ queryKey: vacunaKeys.all });
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: vacunaKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: vacunaKeys.byPet(variables.pet_id) });
       toast.success("Vacuna registrada correctamente");
     },
     onError: (error: Error) => {
@@ -55,8 +57,12 @@ export const useUpdateVacuna = () => {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateVacunaRequest }) =>
       VacunaService.updateVacuna(id, data),
-    onSuccess: (updatedVacuna, { id }) => {
-      queryClient.invalidateQueries({ queryKey: vacunaKeys.all });
+    onSuccess: (_, { id, data }) => {
+      queryClient.invalidateQueries({ queryKey: vacunaKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: vacunaKeys.detail(id) });
+      if (data.pet_id) {
+        queryClient.invalidateQueries({ queryKey: vacunaKeys.byPet(data.pet_id) });
+      }
       toast.success("Vacuna actualizada correctamente");
     },
     onError: (error: Error) => {
@@ -71,7 +77,10 @@ export const useDeleteVacuna = (petId?: string) => {
   return useMutation({
     mutationFn: (id: string) => VacunaService.deleteVacuna(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: vacunaKeys.all });
+      queryClient.invalidateQueries({ queryKey: vacunaKeys.lists() });
+      if (petId) {
+        queryClient.invalidateQueries({ queryKey: vacunaKeys.byPet(petId) });
+      }
       toast.success("Vacuna eliminada correctamente");
     },
     onError: (error: Error) => {

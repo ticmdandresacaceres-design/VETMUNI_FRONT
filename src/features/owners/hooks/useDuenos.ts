@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import * as DuenoService from "../services/DuenoService";
 import { CreateDuenoRequest, UpdateDuenoRequest } from "../types";
 import { ApiError } from "@/src/lib/api/axios";
@@ -15,6 +15,7 @@ export const useDuenos = (params?: DuenoService.GetDuenosParams) => {
   return useQuery({
     queryKey: duenoKeys.lists(params),
     queryFn: () => DuenoService.getDuenos(params),
+    placeholderData: keepPreviousData,
   });
 };
 

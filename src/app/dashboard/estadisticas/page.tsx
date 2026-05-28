@@ -3,12 +3,23 @@
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
 import { StatsCards } from "@/src/features/dashboard/components/StatsCards";
-import { SpeciesPieChart } from "@/src/features/dashboard/components/SpeciesPieChart";
-import { MonthlyActivityChart } from "@/src/features/dashboard/components/MonthlyActivityChart";
+import dynamic from "next/dynamic";
 import { UnvaccinatedPetsTable } from "@/src/features/dashboard/components/UnvaccinatedPetsTable";
 import { VaccineAlertsTable } from "@/src/features/dashboard/components/VaccineAlertsTable";
 import { useDashboardStats, useMonthlyActivity, useSpeciesDistribution, useVaccineAlerts, useUnvaccinatedPets } from "@/src/features/dashboard/hooks/useStats";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const SpeciesPieChart = dynamic(
+  () => import("@/src/features/dashboard/components/SpeciesPieChart").then(m => ({ default: m.SpeciesPieChart })),
+  { ssr: false, loading: () => <Card><CardContent className="pt-6"><Skeleton className="h-64 w-full" /></CardContent></Card> }
+);
+
+const MonthlyActivityChart = dynamic(
+  () => import("@/src/features/dashboard/components/MonthlyActivityChart").then(m => ({ default: m.MonthlyActivityChart })),
+  { ssr: false, loading: () => <Card><CardContent className="pt-6"><Skeleton className="h-64 w-full" /></CardContent></Card> }
+);
 
 export default function EstadisticasPage() {
   const { refetch: refetchDashboard, error: dashboardError } = useDashboardStats();

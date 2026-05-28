@@ -1,10 +1,24 @@
+/* eslint-disable jsx-a11y/alt-text */
 import React from 'react';
 import { Document, Page, Text, View, Image, StyleSheet, pdf } from '@react-pdf/renderer';
 import QRCode from 'qrcode';
 import type { Mascota } from '@/src/features/patients/types';
+import { resolveImageUrl } from '@/src/lib/utils/utils';
 
-// Placeholder image used when mascota photo is not available
 const placeholderImg = '/images/dim/placeholder.png';
+
+async function urlToBase64(url: string): Promise<string> {
+  const response = await fetch(url);
+  const blob = await response.blob();
+  const img = await createImageBitmap(blob);
+  const canvas = document.createElement('canvas');
+  canvas.width = img.width;
+  canvas.height = img.height;
+  const ctx = canvas.getContext('2d')!;
+  ctx.drawImage(img, 0, 0);
+  img.close();
+  return canvas.toDataURL('image/jpeg', 0.85);
+}
 
 const styles = StyleSheet.create({
   page: {
@@ -91,7 +105,7 @@ const styles = StyleSheet.create({
   },
 });
 
-const MascotaCard = ({ data, qrDataUrl, bgUrl }: { data: Mascota, qrDataUrl: string, bgUrl: string }) => {
+const MascotaCard = ({ data, qrDataUrl, bgUrl, photoUrl }: { data: Mascota, qrDataUrl: string, bgUrl: string, photoUrl?: string }) => {
   const truncate = (str: string, len: number) => str.length > len ? str.substring(0, len) + '.' : str;
 
   return (
@@ -101,7 +115,7 @@ const MascotaCard = ({ data, qrDataUrl, bgUrl }: { data: Mascota, qrDataUrl: str
 
         <View style={styles.mainContainer}>
           <View style={styles.photoContainer}>
-            <Image src={placeholderImg} style={styles.photo} />
+            <Image src={photoUrl || placeholderImg} style={styles.photo} />
           </View>
 
           <View style={styles.infoContainer}>
@@ -112,7 +126,7 @@ const MascotaCard = ({ data, qrDataUrl, bgUrl }: { data: Mascota, qrDataUrl: str
 
             <View style={styles.row}>
               <Text style={styles.label}>CÓDIGO:</Text>
-              <Text style={styles.idValue}>{data.id}</Text>
+              <Text style={styles.idValue}>{data.identifier}</Text>
             </View>
 
             <View style={styles.row}>
@@ -136,8 +150,8 @@ const MascotaCard = ({ data, qrDataUrl, bgUrl }: { data: Mascota, qrDataUrl: str
             </View>
 
             <View style={styles.row}>
-              <Text style={styles.label}>EDAD:</Text>
-              <Text style={styles.value}>{data.age}</Text>
+              <Text style={styles.label}>TEMP..</Text>
+              <Text style={styles.value}>{data.temperament}</Text>
             </View>
           </View>
 
@@ -154,15 +168,10 @@ const MascotaCard = ({ data, qrDataUrl, bgUrl }: { data: Mascota, qrDataUrl: str
 
 export const generateMascotaPDF = async (data: Mascota): Promise<void> => {
   try {
-    const textoQR = `
-      DOCUMENTO DE IDENTIDAD DE MASCOTA
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const verifyUrl = `${baseUrl}/verificar?id=${data.identifier}`;
 
-      NOMBRE: ${data.name.toUpperCase()}
-      IDENTIFICADOR: ${data.id}
-
-      REGISTRO OFICIAL MUNICIPAL
-      ANDRES AVELINO CACERES D.
-      `;
+    const textoQR = verifyUrl;
 
     const qrDataUrl = await QRCode.toDataURL(textoQR, {
       margin: 0,
@@ -172,14 +181,24 @@ export const generateMascotaPDF = async (data: Mascota): Promise<void> => {
 
     const bgUrl = '/images/dim/dim-base.png';
 
+    let photoUrl: string | undefined;
+    const rawUrl = resolveImageUrl(data.images?.[0]?.path_url);
+    if (rawUrl) {
+      try {
+        photoUrl = await urlToBase64(rawUrl);
+      } catch {
+        photoUrl = undefined;
+      }
+    }
+
     const blob = await pdf(
-      <MascotaCard data={data} qrDataUrl={qrDataUrl} bgUrl={bgUrl} />
+      <MascotaCard data={data} qrDataUrl={qrDataUrl} bgUrl={bgUrl} photoUrl={photoUrl} />
     ).toBlob();
 
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `DIM_${data.id}.pdf`;
+    link.download = `DIM_${data.identifier}.pdf`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

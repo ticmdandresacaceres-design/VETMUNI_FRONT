@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import * as MascotaService from "../services/MascotaService";
 import { CreateMascotaRequest, UpdateMascotaRequest } from "../types";
 import { toast } from "sonner";
@@ -15,6 +15,7 @@ export const useMascotas = (params?: MascotaService.GetMascotasParams) => {
   return useQuery({
     queryKey: mascotaKeys.lists(params),
     queryFn: () => MascotaService.getMascotas(params),
+    placeholderData: keepPreviousData,
   });
 };
 
@@ -32,7 +33,7 @@ export const useCreateMascota = () => {
   return useMutation({
     mutationFn: (data: CreateMascotaRequest) => MascotaService.createMascota(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: mascotaKeys.all });
+      queryClient.invalidateQueries({ queryKey: mascotaKeys.lists() });
       toast.success("Mascota registrada correctamente");
     },
     onError: (error: Error) => {
@@ -48,7 +49,8 @@ export const useUpdateMascota = () => {
     mutationFn: ({ id, data }: { id: string; data: UpdateMascotaRequest }) =>
       MascotaService.updateMascota(id, data),
     onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: mascotaKeys.all });
+      queryClient.invalidateQueries({ queryKey: mascotaKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: mascotaKeys.detail(id) });
       toast.success("Mascota actualizada correctamente");
     },
     onError: (error: Error) => {
@@ -63,7 +65,7 @@ export const useDeleteMascota = () => {
   return useMutation({
     mutationFn: (id: string) => MascotaService.deleteMascota(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: mascotaKeys.all });
+      queryClient.invalidateQueries({ queryKey: mascotaKeys.lists() });
       toast.success("Mascota eliminada correctamente");
     },
     onError: (error: Error) => {

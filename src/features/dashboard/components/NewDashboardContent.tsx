@@ -31,7 +31,12 @@ import {
   Dog,
   Cat,
 } from "lucide-react";
-import { MonthlyActivityMiniChart } from "@/src/features/dashboard/components/MonthlyActivityMiniChart";
+import dynamic from "next/dynamic";
+
+const MonthlyActivityMiniChart = dynamic(
+  () => import("@/src/features/dashboard/components/MonthlyActivityMiniChart").then(m => ({ default: m.MonthlyActivityMiniChart })),
+  { ssr: false, loading: () => <Card><CardContent className="pt-6"><Skeleton className="h-32 w-full" /></CardContent></Card> }
+);
 
 export default function NewDashboardContent() {
   const router = useRouter();

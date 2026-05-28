@@ -1,15 +1,15 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useCombinedPetWithOwner } from "../hooks/usePacientes";
 import { getVaccineStatus } from "../hooks/usePacientes";
 import { useVacunasPorMascota, useCreateVacuna } from "../../vaccines/hooks/useVacunas";
-import { useDeleteMascota } from "../hooks/useMascotas";
+import { useDeleteMascota, useUploadPetImage, useDeletePetImage } from "../hooks/useMascotas";
 import VaccineTimeline from "./VaccineTimeline";
 import type { VaccineStatus } from "../types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -31,6 +31,11 @@ import {
   FlaskConical,
   Plus,
   ExternalLink,
+  Camera,
+  FileImage,
+  Upload,
+  X,
+  Loader2,
 } from "lucide-react";
 import EditMascotaModal from "./EditMascotaModal";
 import {
@@ -51,6 +56,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { generateMascotaPDF } from "@/src/lib/utils/dim-generador";
+import { resolveImageUrl } from "@/src/lib/utils/utils";
 
 const vacunasPerro = [
   "Rabia", "Séxtuple", "Quíntuple", "Moquillo", "Parvovirus",
@@ -88,6 +95,65 @@ export default function PacienteDetail({ petId }: PacienteDetailProps) {
   const [vaccineDate, setVaccineDate] = useState(new Date().toISOString().split("T")[0]);
   const [vaccineMonths, setVaccineMonths] = useState("12");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showImageDialog, setShowImageDialog] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const uploadImage = useUploadPetImage();
+  const deleteImage = useDeletePetImage(petId);
+
+  const petImage = resolveImageUrl(mascota?.images?.[0]?.path_url);
+  const petImageId = mascota?.images?.[0]?.id;
+
+  const resetImageSelection = () => {
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleSelectFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSelectedFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+  };
+
+  const handleUploadImage = async () => {
+    if (!selectedFile) return;
+    setUploading(true);
+    try {
+      await uploadImage.mutateAsync({ petId, image: selectedFile });
+      toast.success("Imagen subida correctamente");
+      setShowImageDialog(false);
+      resetImageSelection();
+    } catch {
+      toast.error("Error al subir la imagen");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDeleteImage = async () => {
+    if (!petImageId) return;
+    try {
+      await deleteImage.mutateAsync(petImageId);
+      toast.success("Imagen eliminada correctamente");
+    } catch {
+      toast.error("Error al eliminar la imagen");
+    }
+  };
+
+  const handleGenerateDIM = async () => {
+    if (!mascota) return;
+    try {
+      await generateMascotaPDF(mascota);
+      toast.success("DIM generado correctamente");
+    } catch {
+      toast.error("Error al generar el DIM");
+    }
+  };
 
   if (isLoading) {
     return (
@@ -176,6 +242,10 @@ export default function PacienteDetail({ petId }: PacienteDetailProps) {
           </div>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={handleGenerateDIM}>
+            <FileImage className="w-4 h-4" />
+            DIM
+          </Button>
           <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setShowAddVaccine(true)}>
             <Syringe className="w-4 h-4" />
             Vacunar
@@ -198,11 +268,35 @@ export default function PacienteDetail({ petId }: PacienteDetailProps) {
             <CardContent className="p-0">
               <div className="bg-gradient-to-br from-primary/5 to-primary/10 p-6 flex flex-col items-center text-center border-b relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-                <Avatar className="w-28 h-28 border-4 border-background shadow-md mb-4 relative">
-                  <AvatarFallback className="bg-primary/10 text-primary text-4xl font-bold">
-                    {mascota.name.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
+                <div className="relative mb-4">
+                  <Avatar className="w-28 h-28 border-4 border-background shadow-md">
+                    {petImage ? (
+                      <AvatarImage src={petImage} alt={mascota.name} className="object-cover" />
+                    ) : null}
+                    <AvatarFallback className="bg-primary/10 text-primary text-4xl font-bold">
+                      {mascota.name.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="absolute -bottom-1 -right-1 rounded-full w-8 h-8 shadow-md"
+                    onClick={() => { resetImageSelection(); setShowImageDialog(true); }}
+                  >
+                    <Camera className="w-4 h-4" />
+                  </Button>
+                  {petImageId && (
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      className="absolute -top-1 -right-1 rounded-full w-7 h-7 shadow-md"
+                      onClick={handleDeleteImage}
+                      disabled={deleteImage.isPending}
+                    >
+                      {deleteImage.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <X className="w-3.5 h-3.5" />}
+                    </Button>
+                  )}
+                </div>
                 <h2 className="text-xl font-bold">{mascota.name}</h2>
                 <div className="flex items-center gap-1.5 mt-1.5">
                   <Badge variant="outline" className="capitalize text-xs">{mascota.species}</Badge>
@@ -348,11 +442,71 @@ export default function PacienteDetail({ petId }: PacienteDetailProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Image Upload Dialog */}
+      <Dialog open={showImageDialog} onOpenChange={setShowImageDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Camera className="w-5 h-5 text-primary" />
+              {petImage ? "Cambiar foto de mascota" : "Subir foto de mascota"}
+            </DialogTitle>
+            <DialogDescription>
+               Selecciona una imagen para {mascota.name}. Formatos: JPG, PNG, WebP. Máx 5MB.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex flex-col items-center gap-4 py-4">
+            {previewUrl ? (
+              <div className="relative w-full max-w-[250px] aspect-square rounded-xl overflow-hidden border">
+                <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-2 right-2 bg-background/80 hover:bg-background rounded-full"
+                  onClick={resetImageSelection}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            ) : (
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full max-w-[250px] aspect-square rounded-xl border-2 border-dashed border-muted-foreground/30 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-primary/50 hover:bg-muted/20 transition-colors"
+              >
+                <Upload className="w-10 h-10 text-muted-foreground/50" />
+                <p className="text-sm text-muted-foreground">Haz clic para seleccionar</p>
+              </div>
+            )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={handleSelectFile}
+            />
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowImageDialog(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleUploadImage} disabled={!selectedFile || uploading} className="gap-2">
+              {uploading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Upload className="w-4 h-4" />
+              )}
+              {uploading ? "Subiendo..." : "Subir imagen"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
-function InfoRow({ icon: Icon, label, value }: { icon: any; label: string; value?: string | null }) {
+function InfoRow({ icon: Icon, label, value }: { icon: React.ComponentType<{ className?: string }>; label: string; value?: string | null }) {
   return (
     <div className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/30">
       <div className="bg-background p-1.5 rounded-full shadow-sm">

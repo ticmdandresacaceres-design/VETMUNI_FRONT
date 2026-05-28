@@ -5,8 +5,17 @@ export interface UserBrief {
   phone?: string;
 }
 
+export interface MascotaImagen {
+  id: string;
+  path_url: string;
+  pet_id: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface Mascota {
   id: string;
+  identifier: string;
   name: string;
   species: string;
   race: string;
@@ -18,6 +27,7 @@ export interface Mascota {
   status: string;
   user_id: string;
   user?: UserBrief;
+  images?: MascotaImagen[];
   created_at?: string;
   updated_at?: string;
 }
@@ -30,14 +40,7 @@ export interface PaginationMeta {
   has_more: boolean;
 }
 
-export interface MascotaImagen {
-  id: string;
-  filename: string;
-  path: string;
-  pet_id: string;
-  created_at?: string;
-  updated_at?: string;
-}
+
 
 export interface CreateMascotaRequest {
   name: string;
