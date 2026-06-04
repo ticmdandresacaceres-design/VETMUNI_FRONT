@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { MoreHorizontal, Trash2, Edit, Syringe, Calendar, PawPrint, ChevronLeft, ChevronRight } from "lucide-react"
 import {
   Table,
@@ -51,12 +51,7 @@ export default function VacunasList() {
   const [vacunaToDelete, setVacunaToDelete] = useState<Vacuna | null>(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [vacunaToEdit, setVacunaToEdit] = useState<Vacuna | null>(null)
-  const [isMounted, setIsMounted] = useState(false)
   const [filteredVacunas, setFilteredVacunas] = useState<Vacuna[]>([])
-
-  useEffect(() => {
-    setIsMounted(true)
-  }, [])
 
   const handleDeleteClick = (vacuna: Vacuna) => {
     setVacunaToDelete(vacuna)
@@ -84,49 +79,6 @@ export default function VacunasList() {
     if (diffDays < 0) return { label: "Vencida", variant: "destructive" as const }
     if (diffDays <= 30) return { label: "Próxima a vencer", variant: "secondary" as const }
     return { label: "Vigente", variant: "default" as const }
-  }
-
-  const LoadingSkeleton = () => (
-    <>
-      {[...Array(5)].map((_, index) => (
-        <TableRow key={index}>
-          <TableCell><Skeleton className="h-4 w-full max-w-[150px]" /></TableCell>
-          <TableCell><Skeleton className="h-4 w-full max-w-[120px]" /></TableCell>
-          <TableCell><Skeleton className="h-4 w-full max-w-[100px]" /></TableCell>
-          <TableCell><Skeleton className="h-4 w-full max-w-[120px]" /></TableCell>
-          <TableCell><Skeleton className="h-4 w-full max-w-[150px]" /></TableCell>
-          <TableCell><Skeleton className="h-4 w-full max-w-[100px]" /></TableCell>
-          <TableCell><Skeleton className="h-8 w-8" /></TableCell>
-        </TableRow>
-      ))}
-    </>
-  )
-
-  if (!isMounted) {
-    return (
-      <div className="space-y-6 animate-in fade-in duration-500">
-        <Card className="border-t-4 border-t-primary">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <Skeleton className="h-8 w-48" />
-                <Skeleton className="h-4 w-64" />
-              </div>
-              <Skeleton className="h-10 w-40" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    )
   }
 
   const displayVacunas = filteredVacunas.length > 0 ? filteredVacunas : vacunas
@@ -402,6 +354,24 @@ export default function VacunasList() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    </>
+  )
+}
+
+function LoadingSkeleton() {
+  return (
+    <>
+      {[...Array(5)].map((_, index) => (
+        <TableRow key={index}>
+          <TableCell><Skeleton className="h-4 w-full max-w-[150px]" /></TableCell>
+          <TableCell><Skeleton className="h-4 w-full max-w-[120px]" /></TableCell>
+          <TableCell><Skeleton className="h-4 w-full max-w-[100px]" /></TableCell>
+          <TableCell><Skeleton className="h-4 w-full max-w-[120px]" /></TableCell>
+          <TableCell><Skeleton className="h-4 w-full max-w-[150px]" /></TableCell>
+          <TableCell><Skeleton className="h-4 w-full max-w-[100px]" /></TableCell>
+          <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+        </TableRow>
+      ))}
     </>
   )
 }

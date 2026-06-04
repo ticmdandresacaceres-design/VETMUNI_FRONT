@@ -76,24 +76,11 @@ export default function AdminDashboardContent() {
     const deleteVetMutation = useDeleteVeterinario();
     const updateVetMutation = useUpdateVeterinario();
 
-    const [isMounted, setIsMounted] = useState(false);
     const [vetToDelete, setVetToDelete] = useState<Veterinario | null>(null);
     const [vetToEdit, setVetToEdit] = useState<Veterinario | null>(null);
     const [editName, setEditName] = useState("");
     const [editPhone, setEditPhone] = useState("");
     const [editAddress, setEditAddress] = useState("");
-
-    useEffect(() => {
-        setIsMounted(true);
-    }, []);
-
-    useEffect(() => {
-        if (vetToEdit) {
-            setEditName(vetToEdit.name);
-            setEditPhone(vetToEdit.phone);
-            setEditAddress(vetToEdit.address);
-        }
-    }, [vetToEdit]);
 
     const totalVets = veterinarians.length;
     const activeVets = veterinarians.filter(vet => vet.active).length;
@@ -128,10 +115,6 @@ export default function AdminDashboardContent() {
         });
         setVetToEdit(null);
     };
-
-    if (!isMounted) {
-        return <AdminLoadingSkeleton />;
-    }
 
     return (
         <div className="space-y-8">
@@ -317,7 +300,12 @@ export default function AdminDashboardContent() {
                                                 <DropdownMenuContent align="end">
                                                     <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                                                     <DropdownMenuSeparator />
-                                                    <DropdownMenuItem onClick={() => setVetToEdit(vet)}>
+                                                    <DropdownMenuItem onClick={() => {
+                                                        setEditName(vet.name);
+                                                        setEditPhone(vet.phone);
+                                                        setEditAddress(vet.address);
+                                                        setVetToEdit(vet);
+                                                    }}>
                                                         <Edit className="mr-2 h-4 w-4" />
                                                         Editar
                                                     </DropdownMenuItem>
@@ -485,26 +473,4 @@ export default function AdminDashboardContent() {
     );
 }
 
-function AdminLoadingSkeleton() {
-    return (
-        <div className="space-y-8">
-            <div className="space-y-4">
-                <Skeleton className="h-12 w-96" />
-                <Skeleton className="h-6 w-72" />
-            </div>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                {[...Array(4)].map((_, i) => (
-                    <Card key={i}>
-                        <CardHeader className="pb-2">
-                            <Skeleton className="h-10 w-10 rounded-lg" />
-                            <Skeleton className="h-6 w-32 mt-2" />
-                        </CardHeader>
-                        <CardContent>
-                            <Skeleton className="h-4 w-full" />
-                        </CardContent>
-                    </Card>
-                ))}
-            </div>
-        </div>
-    );
-}
+

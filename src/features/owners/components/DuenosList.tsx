@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { MoreHorizontal, Trash2, Eye, Phone, Mail, IdCard, Plus, Edit, Users, UserCheck, PawPrint, ChevronLeft, ChevronRight } from "lucide-react"
 import {
   Table,
@@ -56,14 +56,9 @@ export default function DuenosList() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [duenoToEdit, setDuenoToEdit] = useState<Dueno | null>(null)
-  const [isMounted, setIsMounted] = useState(false)
   const [filteredDuenos, setFilteredDuenos] = useState<Dueno[]>([])
   const [isAddMascotaModalOpen, setIsAddMascotaModalOpen] = useState(false)
   const [duenoForMascota, setDuenoForMascota] = useState<Dueno | null>(null)
-
-  useEffect(() => {
-    setIsMounted(true)
-  }, [])
 
   const handleDeleteClick = (dueno: Dueno) => {
     setDuenoToDelete(dueno)
@@ -94,56 +89,6 @@ export default function DuenosList() {
   const handleRegisterMascota = (dueno: Dueno) => {
     setDuenoForMascota(dueno)
     setIsAddMascotaModalOpen(true)
-  }
-
-  const LoadingSkeleton = () => (
-    <>
-      {[...Array(5)].map((_, index) => (
-        <TableRow key={index}>
-          <TableCell><Skeleton className="h-4 w-full max-w-[200px]" /></TableCell>
-          <TableCell><Skeleton className="h-4 w-full max-w-[120px]" /></TableCell>
-          <TableCell><Skeleton className="h-4 w-full max-w-[200px]" /></TableCell>
-          <TableCell><Skeleton className="h-4 w-full max-w-[120px]" /></TableCell>
-          <TableCell><Skeleton className="h-4 w-full max-w-[150px]" /></TableCell>
-          <TableCell><Skeleton className="h-4 w-full max-w-[60px]" /></TableCell>
-          <TableCell><Skeleton className="h-8 w-8" /></TableCell>
-        </TableRow>
-      ))}
-    </>
-  )
-
-  if (!isMounted) {
-    return (
-      <div className="space-y-6 animate-in fade-in duration-500">
-        <Card className="border-t-4 border-t-primary">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <Skeleton className="h-8 w-48" />
-                <Skeleton className="h-4 w-64" />
-              </div>
-              <Skeleton className="h-10 w-40" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <Skeleton className="h-20 w-full" />
-                <Skeleton className="h-20 w-full" />
-                <Skeleton className="h-20 w-full" />
-              </div>
-              <div className="space-y-3">
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-12 w-full" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    )
   }
 
   const displayDuenos = filteredDuenos.length > 0 ? filteredDuenos : duenos
@@ -439,6 +384,24 @@ export default function DuenosList() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    </>
+  )
+}
+
+function LoadingSkeleton() {
+  return (
+    <>
+      {[...Array(5)].map((_, index) => (
+        <TableRow key={index}>
+          <TableCell><Skeleton className="h-4 w-full max-w-[200px]" /></TableCell>
+          <TableCell><Skeleton className="h-4 w-full max-w-[120px]" /></TableCell>
+          <TableCell><Skeleton className="h-4 w-full max-w-[200px]" /></TableCell>
+          <TableCell><Skeleton className="h-4 w-full max-w-[120px]" /></TableCell>
+          <TableCell><Skeleton className="h-4 w-full max-w-[150px]" /></TableCell>
+          <TableCell><Skeleton className="h-4 w-full max-w-[60px]" /></TableCell>
+          <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+        </TableRow>
+      ))}
     </>
   )
 }

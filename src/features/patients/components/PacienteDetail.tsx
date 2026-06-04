@@ -4,7 +4,7 @@ import { useState, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useCombinedPetWithOwner } from "../hooks/usePacientes";
 import { getVaccineStatus } from "../hooks/usePacientes";
-import { useVacunasPorMascota, useCreateVacuna } from "../../vaccines/hooks/useVacunas";
+import { useCreateVacuna } from "../../vaccines/hooks/useVacunas";
 import { useDeleteMascota, useUploadPetImage, useDeletePetImage } from "../hooks/useMascotas";
 import VaccineTimeline from "./VaccineTimeline";
 import type { VaccineStatus } from "../types";

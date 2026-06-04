@@ -2,7 +2,6 @@ import { useMemo } from "react";
 import { useMascota, useMascotas, useGetMascotasByOwner } from "../hooks/useMascotas";
 import { useVacunasPorMascota } from "../../vaccines/hooks/useVacunas";
 import { useDueno } from "../../owners/hooks/useDuenos";
-import { useVaccineAlerts, useUnvaccinatedPets } from "../../dashboard/hooks/useStats";
 import type { VaccineStatus, VaccineStatusInfo } from "../types";
 import type { Mascota } from "../types";
 import type { Vacuna } from "../../vaccines/types";

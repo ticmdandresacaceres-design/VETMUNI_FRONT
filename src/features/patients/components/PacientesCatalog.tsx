@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useMascotas, useSearchMascotas } from "../hooks/usePacientes";
 import { getVaccineStatus } from "../hooks/usePacientes";
@@ -94,7 +94,7 @@ export default function PacientesCatalog() {
   const [page, setPage] = useState(1);
 
   const { data: searchData } = useSearchMascotas(search);
-  const { data: mascotasData, isLoading } = useMascotas({ per_page: 20, page });
+  const { data: mascotasData, isLoading } = useMascotas({ per_page: 10, page });
   const allData = search ? (searchData ?? []) : (mascotasData?.data ?? []);
 
   const displayedPets = useMemo(() => {

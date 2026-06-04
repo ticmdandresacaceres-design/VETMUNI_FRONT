@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Sheet, SheetContent } from "@/components/ui/sheet"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { ThemeToggle } from "@/src/shared/components/ThemeToggle"
@@ -42,7 +42,7 @@ const sidebarNavItems = [
     description: "Vista general"
   },
   {
-    title: "Pacientes",
+    title: "Mascotas",
     href: "/dashboard/pacientes",
     icon: PawPrint,
     description: "Control veterinario"
@@ -84,14 +84,9 @@ export default function VeterinariaLayoutClient({ children }: VeterinariaLayoutP
   const pathname = usePathname()
   const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [mounted, setMounted] = useState(false)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
 
-  const { user, logout } = useAuthContext()
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  const { user, logout, isLoading } = useAuthContext()
 
   const handleLogout = async () => {
     setIsLoggingOut(true)
@@ -100,7 +95,7 @@ export default function VeterinariaLayoutClient({ children }: VeterinariaLayoutP
       await logout()
       toast.success("Sesión cerrada exitosamente")
       router.push('/login')
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error durante logout:', error)
       toast.success("Sesión cerrada")
       router.push('/login')
@@ -109,7 +104,7 @@ export default function VeterinariaLayoutClient({ children }: VeterinariaLayoutP
     }
   }
 
-  if (!mounted) {
+  if (isLoading) {
     return (
       <div className="flex h-screen overflow-hidden bg-background">
         <div className="hidden w-72 flex-col border-r lg:flex bg-card">
@@ -159,7 +154,7 @@ export default function VeterinariaLayoutClient({ children }: VeterinariaLayoutP
       .substring(0, 2)
   }
 
-  const SidebarContent = () => (
+  const sidebarContent = (
     <div className="flex h-full flex-col bg-card">
       {/* Logo y Header del Sidebar */}
       <div className="flex h-16 items-center border-b px-6 bg-primary/5">
@@ -288,13 +283,13 @@ export default function VeterinariaLayoutClient({ children }: VeterinariaLayoutP
     <div className="flex h-screen overflow-hidden">
       {/* Desktop Sidebar */}
       <aside className="hidden w-72 flex-col border-r lg:flex">
-        <SidebarContent />
+        {sidebarContent}
       </aside>
 
       {/* Mobile Sidebar */}
       <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
         <SheetContent side="left" className="w-72 p-0">
-          <SidebarContent />
+          {sidebarContent}
         </SheetContent>
       </Sheet>
 

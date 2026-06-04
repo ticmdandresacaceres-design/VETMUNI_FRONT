@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDuenos, useCreateDueno, useGetMascotasByOwner, useCreateMascota, useCreateVacuna } from "../hooks/usePacientes";
-import { useSearchMascotas } from "../hooks/useMascotas";
 import type { Dueno } from "../../owners/types";
 import type { Mascota } from "../types";
 import { Button } from "@/components/ui/button";
@@ -31,8 +30,6 @@ import {
   Phone,
   IdCard,
   Users,
-  Dog,
-  Cat,
   X,
   ArrowLeft,
   Loader2,
@@ -230,7 +227,7 @@ export default function RegistroWizard() {
           const isComplete = s < step;
           const isCurrent = s === step;
           const labels: Record<number, string> = { 1: "Dueño", 2: "Mascota", 3: "Vacuna" };
-          const icons: Record<number, any> = { 1: Users, 2: PawPrint, 3: Syringe };
+          const icons = { 1: Users, 2: PawPrint, 3: Syringe } as const;
           const Icon = icons[s];
 
           return (

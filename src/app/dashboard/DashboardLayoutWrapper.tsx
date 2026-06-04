@@ -4,8 +4,7 @@ import { useAuthContext } from "@/src/features/auth/context/AuthContext";
 import AdminLayoutClient from "@/src/features/layouts/AdminLayoutClient";
 import VeterinariaLayoutClient from "@/src/features/layouts/VeterinariaLayoutClient";
 import { AuthGuard } from "@/src/features/auth/context/AuthGuard";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default function DashboardLayoutWrapper({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuthContext();

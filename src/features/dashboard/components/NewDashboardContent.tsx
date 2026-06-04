@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthContext } from "@/src/features/auth/context/AuthContext";
 import {
@@ -30,6 +30,7 @@ import {
   Stethoscope,
   Dog,
   Cat,
+  type LucideIcon,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 
@@ -41,14 +42,11 @@ const MonthlyActivityMiniChart = dynamic(
 export default function NewDashboardContent() {
   const router = useRouter();
   const { user } = useAuthContext();
-  const [isMounted, setIsMounted] = useState(false);
 
   const { data: stats, isLoading: statsLoading, refetch: refetchStats } = useDashboardStats();
   const { data: alerts, isLoading: alertsLoading } = useVaccineAlerts();
   const { data: unvaccinated } = useUnvaccinatedPets();
   const { refetch: refetchMonthly } = useMonthlyActivity();
-
-  useEffect(() => { setIsMounted(true); }, []);
 
   const currentHour = new Date().getHours();
   const greeting = currentHour < 12 ? "Buenos días" : currentHour < 18 ? "Buenas tardes" : "Buenas noches";
@@ -67,10 +65,6 @@ export default function NewDashboardContent() {
 
   const overdueCount = alerts?.filter((a) => a.alert_type === "atrasada").length ?? 0;
   const upcomingCount = alerts?.filter((a) => a.alert_type === "próxima").length ?? 0;
-
-  if (!isMounted) {
-    return <DashboardSkeleton />;
-  }
 
   return (
     <div className="space-y-8">
@@ -344,7 +338,7 @@ function StatCard({
   sub,
   color,
 }: {
-  icon: any;
+  icon: LucideIcon;
   label: string;
   value: number;
   sub: string;
@@ -378,7 +372,7 @@ function QuickActionCard({
   onClick,
   color,
 }: {
-  icon: any;
+  icon: LucideIcon;
   label: string;
   sub: string;
   onClick: () => void;
@@ -420,27 +414,4 @@ function SummaryRow({ label, value }: { label: string; value: number }) {
   );
 }
 
-function DashboardSkeleton() {
-  return (
-    <div className="space-y-8">
-      <div className="space-y-3">
-        <Skeleton className="h-10 w-72" />
-        <Skeleton className="h-5 w-48" />
-      </div>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-28 rounded-xl" />
-        ))}
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <Skeleton key={i} className="h-20 rounded-xl" />
-        ))}
-      </div>
-      <div className="grid lg:grid-cols-2 gap-6">
-        <Skeleton className="h-64 rounded-xl" />
-        <Skeleton className="h-64 rounded-xl" />
-      </div>
-    </div>
-  );
-}
+

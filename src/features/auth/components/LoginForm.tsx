@@ -31,7 +31,7 @@ export const LoginForm = () => {
             toast.success(`¡Bienvenido de nuevo, ${response.user.name}!`);
             router.push("/dashboard");
 
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Login error:", error);
         } finally {
             setIsLoading(false);

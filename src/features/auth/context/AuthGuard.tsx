@@ -2,7 +2,7 @@
 
 import { useAuthContext } from "../context/AuthContext";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useMemo } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,7 +23,7 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
     fallback,
     inactivityTimeoutMinutes = 15
 }) => {
-    const { isAuthenticated, isLoading, hasAnyRole, logout } = useAuthContext();
+    const { isAuthenticated, isLoading, hasAnyRole } = useAuthContext();
     const router = useRouter();
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
     const warningTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -56,23 +56,7 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
         }, 500);
     }, [router]);
 
-    const showInactivityWarning = useCallback(() => {
-        // Solo mostrar en pestaña activa
-        if (document.visibilityState === 'visible') {
-            toast.warning("Sesión expirará pronto", {
-                description: "Tu sesión expirará en 1 minuto por inactividad. Realiza alguna acción para mantenerla activa.",
-                duration: 10000,
-                action: {
-                    label: "Mantener activa",
-                    onClick: () => {
-                        resetInactivityTimer();
-                        toast.success("Sesión extendida");
-                    }
-                }
-            });
-        }
-    }, []);
-
+    const resetTimerRef = useRef<() => void>(() => {});
     const resetInactivityTimer = useCallback(() => {
         // Limpiar timers existentes
         if (timeoutRef.current) {
@@ -89,7 +73,20 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
         if (isAuthenticated && !isLoading && document.visibilityState === 'visible') {
             // Timer para mostrar advertencia
             warningTimeoutRef.current = setTimeout(() => {
-                showInactivityWarning();
+                warningTimeoutRef.current = null;
+                if (document.visibilityState === 'visible') {
+                    toast.warning("Sesión expirará pronto", {
+                        description: "Tu sesión expirará en 1 minuto por inactividad. Realiza alguna acción para mantenerla activa.",
+                        duration: 10000,
+                        action: {
+                            label: "Mantener activa",
+                            onClick: () => {
+                                resetTimerRef.current();
+                                toast.success("Sesión extendida");
+                            }
+                        }
+                    });
+                }
             }, WARNING_TIME);
 
             // Timer para cerrar sesión
@@ -97,7 +94,11 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
                 handleLogoutDueToInactivity();
             }, INACTIVITY_TIME);
         }
-    }, [isAuthenticated, isLoading, INACTIVITY_TIME, WARNING_TIME, handleLogoutDueToInactivity, showInactivityWarning]);
+    }, [isAuthenticated, isLoading, INACTIVITY_TIME, WARNING_TIME, handleLogoutDueToInactivity]);
+
+    useEffect(() => {
+        resetTimerRef.current = resetInactivityTimer;
+    }, [resetInactivityTimer]);
 
     // Eventos que indican actividad del usuario
     const handleUserActivity = useCallback(() => {

@@ -60,19 +60,8 @@ export default function VetsList() {
   const [editPhone, setEditPhone] = useState("")
   const [editAddress, setEditAddress] = useState("")
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false)
-  const [isMounted, setIsMounted] = useState(false)
 
-  useEffect(() => {
-    setIsMounted(true)
-  }, [])
 
-  useEffect(() => {
-    if (vetToEdit) {
-      setEditName(vetToEdit.name)
-      setEditPhone(vetToEdit.phone)
-      setEditAddress(vetToEdit.address)
-    }
-  }, [vetToEdit])
 
   const handleToggleClick = (vet: Veterinario) => {
     setVetToToggle(vet)
@@ -106,43 +95,6 @@ export default function VetsList() {
     })
     setIsEditDialogOpen(false)
     setVetToEdit(null)
-  }
-
-  if (!isMounted) {
-    return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-10 w-36" />
-        </div>
-        <div className="rounded-xl border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nombre</TableHead>
-                <TableHead>DNI</TableHead>
-                <TableHead>Correo</TableHead>
-                <TableHead>Teléfono</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead className="w-[70px]">Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {[...Array(5)].map((_, i) => (
-                <TableRow key={i}>
-                  <TableCell><Skeleton className="h-4 w-40" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-48" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-28" /></TableCell>
-                  <TableCell><Skeleton className="h-6 w-16" /></TableCell>
-                  <TableCell><Skeleton className="h-8 w-8" /></TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
-    )
   }
 
   const validVeterinarians = Array.isArray(veterinarians) ? veterinarians : []
@@ -238,7 +190,12 @@ export default function VetsList() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => setVetToEdit(vet)}>
+                        <DropdownMenuItem onClick={() => {
+                          setEditName(vet.name)
+                          setEditPhone(vet.phone)
+                          setEditAddress(vet.address)
+                          setVetToEdit(vet)
+                        }}>
                           <Edit className="mr-2 h-4 w-4" />
                           Editar
                         </DropdownMenuItem>

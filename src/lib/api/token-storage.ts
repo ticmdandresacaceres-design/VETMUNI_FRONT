@@ -23,7 +23,7 @@ export const tokenStorage = {
   },
 
   // Guardar usuario
-  setUser: (user: any) => {
+  setUser: (user: unknown) => {
     const userString = JSON.stringify(user);
     localStorage.setItem(USER_KEY, userString);
     Cookies.set(USER_KEY, userString, {

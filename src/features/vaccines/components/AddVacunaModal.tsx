@@ -84,25 +84,6 @@ export default function AddVacunaModal({ open, onOpenChange, petId, petName }: A
     }
   }, [open, form])
 
-  const handleSubmitWithConfirmation = useCallback(async () => {
-    const isValid = await form.trigger()
-    if (!isValid) return
-
-    const values = form.getValues()
-
-    showConfirmDialog(
-      {
-        title: "Confirmar registro",
-        message: `¿Estás seguro de registrar la vacuna "${values.type}" para ${petName || "esta mascota"}?`,
-        buttons: {
-          cancel: "Revisar",
-          confirm: "Sí, registrar"
-        }
-      },
-      handleSubmit
-    )
-  }, [form, showConfirmDialog, petName])
-
   const handleSubmit = useCallback(async () => {
     const values = form.getValues()
     try {
@@ -120,6 +101,25 @@ export default function AddVacunaModal({ open, onOpenChange, petId, petName }: A
       // Error handling is managed by the hook
     }
   }, [createVacunaMutation, form, onOpenChange, petId])
+
+  const handleSubmitWithConfirmation = useCallback(async () => {
+    const isValid = await form.trigger()
+    if (!isValid) return
+
+    const values = form.getValues()
+
+    showConfirmDialog(
+      {
+        title: "Confirmar registro",
+        message: `¿Estás seguro de registrar la vacuna "${values.type}" para ${petName || "esta mascota"}?`,
+        buttons: {
+          cancel: "Revisar",
+          confirm: "Sí, registrar"
+        }
+      },
+      handleSubmit
+    )
+  }, [form, showConfirmDialog, petName, handleSubmit])
 
   return (
     <>

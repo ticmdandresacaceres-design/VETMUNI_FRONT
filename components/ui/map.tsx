@@ -341,7 +341,7 @@ function MapLayers({
                 tileLayers.some((layer) => layer.name === defaultTileLayer)
                     ? defaultTileLayer
                     : tileLayers[0].name
-            setSelectedTileLayer(validDefaultValue)
+            setTimeout(() => setSelectedTileLayer(validDefaultValue), 0)
         }
 
         // Error: Invalid defaultActiveLayerGroups
@@ -816,22 +816,25 @@ function MapDrawControl({
 }) {
     const { L, LeafletDraw } = useLeaflet()
     const map = useMap()
+    const [featureGroup, setFeatureGroup] = useState<L.FeatureGroup | null>(null)
     const featureGroupRef = useRef<L.FeatureGroup | null>(null)
     const editControlRef = useRef<EditToolbar.Edit | null>(null)
     const deleteControlRef = useRef<EditToolbar.Delete | null>(null)
     const [activeMode, setActiveMode] = useState<MapDrawMode>(null)
 
     function handleDrawCreated(event: DrawEvents.Created) {
-        if (!featureGroupRef.current) return
+        const fg = featureGroup ?? featureGroupRef.current
+        if (!fg) return
         const { layer } = event
-        featureGroupRef.current.addLayer(layer)
-        onLayersChange?.(featureGroupRef.current)
+        fg.addLayer(layer)
+        onLayersChange?.(fg)
         setActiveMode(null)
     }
 
     function handleDrawEditedOrDeleted() {
-        if (!featureGroupRef.current) return
-        onLayersChange?.(featureGroupRef.current)
+        const fg = featureGroup ?? featureGroupRef.current
+        if (!fg) return
+        onLayersChange?.(fg)
         setActiveMode(null)
     }
 
@@ -853,18 +856,21 @@ function MapDrawControl({
             map.off(L.Draw.Event.EDITED, handleDrawEditedOrDeleted)
             map.off(L.Draw.Event.DELETED, handleDrawEditedOrDeleted)
         }
-    }, [L, LeafletDraw, map, onLayersChange])
+    }, [L, LeafletDraw, map, onLayersChange, featureGroup])
 
     return (
         <MapDrawContext.Provider
             value={{
-                featureGroup: featureGroupRef.current,
+                featureGroup,
                 activeMode,
                 setActiveMode,
                 editControlRef,
                 deleteControlRef,
             }}>
-            <LeafletFeatureGroup ref={featureGroupRef} />
+            <LeafletFeatureGroup ref={(node) => {
+                featureGroupRef.current = node
+                setFeatureGroup(node)
+            }} />
             <ButtonGroup
                 orientation="vertical"
                 className={cn("absolute bottom-1 left-1 z-1000", className)}
@@ -1157,6 +1163,7 @@ function MapDrawEdit({
             touchMoveIcon: mapDrawHandleIcon,
             touchResizeIcon: mapDrawHandleIcon,
         })
+        /* eslint-disable react-hooks/immutability -- intentional leaflet-draw localization */
         L.drawLocal.edit.handlers.edit.tooltip = {
             text: "Drag handles or markers to edit.",
             subtext: "",
@@ -1164,6 +1171,7 @@ function MapDrawEdit({
         L.drawLocal.edit.handlers.remove.tooltip = {
             text: "Click on a shape to remove.",
         }
+        /* eslint-enable react-hooks/immutability */
     }, [mapDrawHandleIcon])
 
     return (
@@ -1259,10 +1267,10 @@ function useLeaflet() {
         if (L && LeafletDraw) return
         if (typeof window !== "undefined") {
             if (!L) {
-                setL(require("leaflet"))
+                import("leaflet").then(m => setL(m.default || m))
             }
             if (!LeafletDraw) {
-                setLeafletDraw(require("leaflet-draw"))
+                import("leaflet-draw").then(m => setLeafletDraw(m.default || m))
             }
         }
     }, [L, LeafletDraw])
@@ -1280,20 +1288,21 @@ function useDebounceLoadingState(delay = 200) {
             timeoutRef.current = setTimeout(() => {
                 setShowLoading(true)
             }, delay)
-        } else {
-            if (timeoutRef.current) {
-                clearTimeout(timeoutRef.current)
-                timeoutRef.current = null
-            }
-            setShowLoading(false)
         }
 
         return () => {
             if (timeoutRef.current) {
                 clearTimeout(timeoutRef.current)
+                timeoutRef.current = null
             }
         }
     }, [isLoading, delay])
+
+    useEffect(() => {
+        if (!isLoading) {
+            setTimeout(() => setShowLoading(false), 0)
+        }
+    }, [isLoading])
 
     return [showLoading, setIsLoading] as const
 }

@@ -59,25 +59,6 @@ export default function AddDuenoModal({ open, onOpenChange }: AddDuenoModalProps
     },
   })
 
-  const handleSubmitWithConfirmation = useCallback(async () => {
-    const isValid = await form.trigger()
-    if (!isValid) return
-
-    const values = form.getValues()
-
-    showConfirmDialog(
-      {
-        title: "Confirmar registro",
-        message: `¿Estás seguro de crear el propietario "${values.name}" con DNI ${values.dni}?\n\nEsta acción creará una nueva cuenta de usuario.`,
-        buttons: {
-          cancel: "Revisar",
-          confirm: "Sí, crear"
-        }
-      },
-      handleSubmit
-    )
-  }, [form, showConfirmDialog])
-
   const handleSubmit = useCallback(async () => {
     const values = form.getValues()
     try {
@@ -100,6 +81,25 @@ export default function AddDuenoModal({ open, onOpenChange }: AddDuenoModalProps
       console.error("Error al crear dueño:", error);
     }
   }, [createDuenoMutation, form, onOpenChange])
+
+  const handleSubmitWithConfirmation = useCallback(async () => {
+    const isValid = await form.trigger()
+    if (!isValid) return
+
+    const values = form.getValues()
+
+    showConfirmDialog(
+      {
+        title: "Confirmar registro",
+        message: `¿Estás seguro de crear el propietario "${values.name}" con DNI ${values.dni}?\n\nEsta acción creará una nueva cuenta de usuario.`,
+        buttons: {
+          cancel: "Revisar",
+          confirm: "Sí, crear"
+        }
+      },
+      handleSubmit
+    )
+  }, [form, showConfirmDialog, handleSubmit])
 
   return (
     <>

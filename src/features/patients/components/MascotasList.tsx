@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { MoreHorizontal, Trash2, Eye, Edit, PawPrint, Syringe, Calendar, Hash, ChevronLeft, ChevronRight } from "lucide-react"
 import {
   Table,
@@ -54,14 +54,9 @@ export default function MascotasList() {
   const [mascotaToDelete, setMascotaToDelete] = useState<Mascota | null>(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [mascotaToEdit, setMascotaToEdit] = useState<Mascota | null>(null)
-  const [isMounted, setIsMounted] = useState(false)
   const [filteredMascotas, setFilteredMascotas] = useState<Mascota[]>([])
   const [isAddVacunaModalOpen, setIsAddVacunaModalOpen] = useState(false)
   const [mascotaForVacuna, setMascotaForVacuna] = useState<Mascota | null>(null)
-
-  useEffect(() => {
-    setIsMounted(true)
-  }, [])
 
   const handleDeleteClick = (mascota: Mascota) => {
     setMascotaToDelete(mascota)
@@ -88,57 +83,6 @@ export default function MascotasList() {
   const handleRegisterVacuna = (mascota: Mascota) => {
     setMascotaForVacuna(mascota)
     setIsAddVacunaModalOpen(true)
-  }
-
-  const LoadingSkeleton = () => (
-    <>
-      {[...Array(5)].map((_, index) => (
-        <TableRow key={index}>
-          <TableCell><Skeleton className="h-4 w-full max-w-[200px]" /></TableCell>
-          <TableCell><Skeleton className="h-4 w-full max-w-[100px]" /></TableCell>
-          <TableCell><Skeleton className="h-4 w-full max-w-[120px]" /></TableCell>
-          <TableCell><Skeleton className="h-4 w-full max-w-[80px]" /></TableCell>
-          <TableCell><Skeleton className="h-4 w-full max-w-[100px]" /></TableCell>
-          <TableCell><Skeleton className="h-4 w-full max-w-[150px]" /></TableCell>
-          <TableCell><Skeleton className="h-4 w-full max-w-[80px]" /></TableCell>
-          <TableCell><Skeleton className="h-8 w-8" /></TableCell>
-        </TableRow>
-      ))}
-    </>
-  )
-
-  if (!isMounted) {
-    return (
-      <div className="space-y-6 animate-in fade-in duration-500">
-        <Card className="border-t-4 border-t-primary">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <Skeleton className="h-8 w-48" />
-                <Skeleton className="h-4 w-64" />
-              </div>
-              <Skeleton className="h-10 w-40" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <Skeleton className="h-20 w-full" />
-                <Skeleton className="h-20 w-full" />
-                <Skeleton className="h-20 w-full" />
-              </div>
-              <div className="space-y-3">
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-12 w-full" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    )
   }
 
   const displayMascotas = filteredMascotas.length > 0 ? filteredMascotas : mascotas
@@ -453,6 +397,25 @@ export default function MascotasList() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    </>
+  )
+}
+
+function LoadingSkeleton() {
+  return (
+    <>
+      {[...Array(5)].map((_, index) => (
+        <TableRow key={index}>
+          <TableCell><Skeleton className="h-4 w-full max-w-[200px]" /></TableCell>
+          <TableCell><Skeleton className="h-4 w-full max-w-[100px]" /></TableCell>
+          <TableCell><Skeleton className="h-4 w-full max-w-[120px]" /></TableCell>
+          <TableCell><Skeleton className="h-4 w-full max-w-[80px]" /></TableCell>
+          <TableCell><Skeleton className="h-4 w-full max-w-[100px]" /></TableCell>
+          <TableCell><Skeleton className="h-4 w-full max-w-[150px]" /></TableCell>
+          <TableCell><Skeleton className="h-4 w-full max-w-[80px]" /></TableCell>
+          <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+        </TableRow>
+      ))}
     </>
   )
 }

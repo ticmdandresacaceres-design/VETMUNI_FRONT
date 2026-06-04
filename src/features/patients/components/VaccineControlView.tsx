@@ -9,18 +9,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  AlertTriangle,
-  Clock,
-  XCircle,
-  CheckCircle2,
-  Search,
-  PawPrint,
   Syringe,
-  Phone,
-  CalendarDays,
-  ArrowRight,
+  AlertTriangle,
+  Calendar,
+  Download,
+  ShieldAlert,
+  CheckCircle2,
+  Clock,
+  PawPrint,
+  Search,
+  Loader2,
   FlaskConical,
-  Filter,
+  XCircle,
+  Phone,
+  ArrowRight,
+  type LucideIcon,
 } from "lucide-react";
 
 type AlertFilter = "todas" | "atrasada" | "próxima";
@@ -245,7 +248,7 @@ function SummaryCard({
   value,
   variant,
 }: {
-  icon: any;
+  icon: LucideIcon;
   label: string;
   value: number;
   variant: "default" | "destructive" | "warning";

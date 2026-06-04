@@ -86,6 +86,19 @@ export default function EditVacunaModal({ open, onOpenChange, vacuna }: EditVacu
     }
   }, [open, vacuna, form])
 
+  const handleSubmit = useCallback(async () => {
+    const values = form.getValues()
+    const payload: UpdateVacunaRequest = {
+      type: values.type,
+      aplication_date: values.aplication_date,
+      months_validity: values.months_validity,
+    }
+
+    await updateVacunaMutation.mutateAsync({ id: vacuna.id, data: payload })
+    form.reset()
+    onOpenChange(false)
+  }, [updateVacunaMutation, form, vacuna.id, onOpenChange])
+
   const handleSubmitWithConfirmation = useCallback(async () => {
     const isValid = await form.trigger()
     if (!isValid) return
@@ -103,20 +116,7 @@ export default function EditVacunaModal({ open, onOpenChange, vacuna }: EditVacu
       },
       handleSubmit
     )
-  }, [form, showConfirmDialog])
-
-  const handleSubmit = useCallback(async () => {
-    const values = form.getValues()
-    const payload: UpdateVacunaRequest = {
-      type: values.type,
-      aplication_date: values.aplication_date,
-      months_validity: values.months_validity,
-    }
-
-    await updateVacunaMutation.mutateAsync({ id: vacuna.id, data: payload })
-    form.reset()
-    onOpenChange(false)
-  }, [updateVacunaMutation, form, vacuna.id, onOpenChange])
+  }, [form, showConfirmDialog, handleSubmit])
 
   return (
     <>

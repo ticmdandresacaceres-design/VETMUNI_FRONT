@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
@@ -27,14 +27,9 @@ interface AdminLayoutProps {
 export default function AdminLayoutClient({ children }: AdminLayoutProps) {
   const pathname = usePathname()
   const router = useRouter()
-  const [mounted, setMounted] = useState(false)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
 
-  const { user, logout } = useAuthContext()
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  const { user, logout, isLoading } = useAuthContext()
 
   const handleLogout = async () => {
     setIsLoggingOut(true)
@@ -43,8 +38,12 @@ export default function AdminLayoutClient({ children }: AdminLayoutProps) {
       await logout()
       toast.success("Sesión cerrada exitosamente")
       router.push('/login')
-    } catch (error: any) {
-      console.error('Error durante logout:', error)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error('Error durante logout:', error.message)
+      } else {
+        console.error('Error durante logout:', String(error))
+      }
       toast.success("Sesión cerrada")
       router.push('/login')
     } finally {
@@ -61,7 +60,7 @@ export default function AdminLayoutClient({ children }: AdminLayoutProps) {
       .substring(0, 2)
   }
 
-  if (!mounted) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-pulse">

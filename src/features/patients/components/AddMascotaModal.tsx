@@ -97,25 +97,6 @@ export default function AddMascotaModal({ open, onOpenChange, ownerId, ownerName
     }
   }, [open, form])
 
-  const handleSubmitWithConfirmation = useCallback(async () => {
-    const isValid = await form.trigger()
-    if (!isValid) return
-
-    const values = form.getValues()
-
-    showConfirmDialog(
-      {
-        title: "Confirmar registro",
-        message: `¿Estás seguro de registrar la mascota "${values.name}" para ${ownerName || "este dueño"}?`,
-        buttons: {
-          cancel: "Revisar",
-          confirm: "Sí, registrar"
-        }
-      },
-      handleSubmit
-    )
-  }, [form, showConfirmDialog, ownerName])
-
   const handleSubmit = useCallback(async () => {
     const values = form.getValues()
     try {
@@ -140,6 +121,25 @@ export default function AddMascotaModal({ open, onOpenChange, ownerId, ownerName
       // Error handling is managed by the hook
     }
   }, [createMascotaMutation, form, onOpenChange, ownerId])
+
+  const handleSubmitWithConfirmation = useCallback(async () => {
+    const isValid = await form.trigger()
+    if (!isValid) return
+
+    const values = form.getValues()
+
+    showConfirmDialog(
+      {
+        title: "Confirmar registro",
+        message: `¿Estás seguro de registrar la mascota "${values.name}" para ${ownerName || "este dueño"}?`,
+        buttons: {
+          cancel: "Revisar",
+          confirm: "Sí, registrar"
+        }
+      },
+      handleSubmit
+    )
+  }, [form, showConfirmDialog, ownerName, handleSubmit])
 
   return (
     <>

@@ -14,9 +14,10 @@ import {
   Avatar, AvatarImage, AvatarFallback
 } from "@/components/ui/avatar";
 import {
-  Shield, Clock, Phone, MapPin, FileText, AlertTriangle,
-  CheckCircle, XCircle, User, Calendar, Syringe, PawPrint
+  Shield, Clock, Phone, MapPin, FileText, AlertTriangle, XCircle, User, Calendar, Syringe, PawPrint, Printer
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { generateVerificarPDF } from "@/src/lib/utils/verificar-pdf";
 
 interface VerifyVaccine {
   id: string;
@@ -120,26 +121,52 @@ function VerifyContent() {
   const [data, setData] = useState<VerifyResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
+
+  const handleExportPDF = async () => {
+    if (!data) return;
+    setPdfLoading(true);
+    try {
+      await generateVerificarPDF(data);
+    } catch {
+      setError("Error al generar el PDF. Intente nuevamente.");
+    } finally {
+      setPdfLoading(false);
+    }
+  };
 
   useEffect(() => {
-    if (!id) {
-      setLoading(false);
-      setError("No se especificó un código de mascota.");
-      return;
-    }
-    setLoading(true);
-    setError(null);
+    if (!id) return;
+    let cancelled = false;
     apiClient.get<VerifyResponseWrapper>(`/verify/${id}`)
-      .then((res) => setData(res.data.data))
+      .then((res) => { if (!cancelled) setData(res.data.data); })
       .catch((err) => {
+        if (cancelled) return;
         if (err.status === 404) {
           setError("No se encontró ninguna mascota con este código.");
         } else {
           setError("Error al consultar la información. Intente nuevamente.");
         }
       })
-      .finally(() => setLoading(false));
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
   }, [id]);
+
+  if (!id) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="w-full max-w-sm text-center">
+          <CardContent className="pt-6 pb-6">
+            <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-full bg-destructive/10">
+              <XCircle className="size-7 text-destructive" />
+            </div>
+            <h2 className="text-lg font-semibold mb-1">Código no especificado</h2>
+            <p className="text-sm text-muted-foreground mb-4">No se especificó un código de mascota.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -181,17 +208,29 @@ function VerifyContent() {
     <div className="min-h-screen bg-background">
       <div className="max-w-3xl mx-auto px-4 py-8 md:py-12 space-y-6">
 
-        <div className="text-center space-y-2">
-          <Badge variant="secondary" className="inline-flex gap-1.5 px-3 py-1">
-            <Shield className="size-3.5" />
-            Registro Oficial Municipal
-          </Badge>
-          <h1 className="text-xl md:text-2xl font-semibold tracking-tight">
-            Documento de Identidad de Mascota
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            M. D. Andrés Avelino Cáceres Dorregaray
-          </p>
+        <div className="flex items-start justify-between gap-4">
+          <div className="space-y-2">
+            <Badge variant="secondary" className="inline-flex gap-1.5 px-3 py-1">
+              <Shield className="size-3.5" />
+              Registro Oficial Municipal
+            </Badge>
+            <h1 className="text-xl md:text-2xl font-semibold tracking-tight">
+              Documento de Identidad de Mascota
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              M. D. Andrés Avelino Cáceres Dorregaray
+            </p>
+          </div>
+          <Button
+            onClick={handleExportPDF}
+            disabled={pdfLoading}
+            variant="default"
+            size="default"
+            className="shrink-0 gap-2"
+          >
+            <Printer className="size-4" />
+            {pdfLoading ? "Generando PDF..." : "Exportar PDF"}
+          </Button>
         </div>
 
         <Card>

@@ -52,7 +52,7 @@ export const RegisterFormModal = ({ trigger, open, onOpenChange }: RegisterFormP
         try {
             await createVetMutation.mutateAsync(formData);
             handleOpenChange(false);
-        } catch (error) {
+        } catch {
             // Error handling is managed by the hook's onError
         }
     };
