@@ -153,7 +153,6 @@ export default function RegistroWizard() {
       setSelectedOwner(result as Dueno);
       setShowCreateOwner(false);
       setNewOwner({ name: "", dni: "", phone: "", email: "", address: "" });
-      toast.success("Dueño registrado correctamente");
     } catch {}
   };
 
@@ -180,7 +179,6 @@ export default function RegistroWizard() {
       });
       setSelectedPet(result as Mascota);
       setShowCreatePet(false);
-      toast.success("Mascota registrada correctamente");
     } catch {}
   };
 
@@ -195,7 +193,6 @@ export default function RegistroWizard() {
           pet_id: selectedPet.id,
         });
       }
-      toast.success("Registro completado exitosamente");
       router.push(`/dashboard/pacientes/${selectedPet?.id}`);
     } catch {
       setIsSubmitting(false);

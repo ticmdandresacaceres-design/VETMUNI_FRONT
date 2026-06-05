@@ -125,11 +125,8 @@ export default function PacienteDetail({ petId }: PacienteDetailProps) {
     setUploading(true);
     try {
       await uploadImage.mutateAsync({ petId, image: selectedFile });
-      toast.success("Imagen subida correctamente");
       setShowImageDialog(false);
       resetImageSelection();
-    } catch {
-      toast.error("Error al subir la imagen");
     } finally {
       setUploading(false);
     }
@@ -139,10 +136,7 @@ export default function PacienteDetail({ petId }: PacienteDetailProps) {
     if (!petImageId) return;
     try {
       await deleteImage.mutateAsync(petImageId);
-      toast.success("Imagen eliminada correctamente");
-    } catch {
-      toast.error("Error al eliminar la imagen");
-    }
+    } catch {}
   };
 
   const handleGenerateDIM = async () => {
@@ -209,14 +203,12 @@ export default function PacienteDetail({ petId }: PacienteDetailProps) {
       });
       setShowAddVaccine(false);
       setVaccineType("");
-      toast.success("Vacuna registrada correctamente");
     } catch {}
   };
 
   const handleDelete = async () => {
     try {
       await deleteMascota.mutateAsync(petId);
-      toast.success("Paciente eliminado");
       router.push("/dashboard/pacientes");
     } catch {}
   };

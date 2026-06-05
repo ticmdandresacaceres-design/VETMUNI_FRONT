@@ -17,7 +17,7 @@ async function urlToBase64(url: string): Promise<string> {
   const ctx = canvas.getContext('2d')!;
   ctx.drawImage(img, 0, 0);
   img.close();
-  return canvas.toDataURL('image/jpeg', 0.85);
+  return canvas.toDataURL('image/png');
 }
 
 const styles = StyleSheet.create({

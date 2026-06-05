@@ -2,14 +2,12 @@ import { ENDPOINTS } from "@/src/lib/api/endpoint";
 import { AuthResponse, LoginRequest } from "../types";
 import apiClient, { ApiError } from "@/src/lib/api/axios";
 import { tokenStorage } from "@/src/lib/api/token-storage";
-import { toast } from "sonner";
 
 export async function login(payload: LoginRequest): Promise<AuthResponse> {
     try {
         const response = await apiClient.post<AuthResponse>(ENDPOINTS.auth.login, payload);
 
         if (!response.data || !response.data.token || !response.data.user) {
-            toast.error("Error en la respuesta del servidor");
             throw new ApiError("Respuesta inválida del servidor", 500);
         }
 
@@ -25,7 +23,6 @@ export async function login(payload: LoginRequest): Promise<AuthResponse> {
         }
 
         console.error("Error inesperado en login:", error);
-        toast.error("Error inesperado al iniciar sesión");
         throw new ApiError("Error inesperado al iniciar sesión");
     }
 }

@@ -32,6 +32,8 @@ export const LoginForm = () => {
             router.push("/dashboard");
 
         } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Error al iniciar sesión";
+            toast.error(message);
             console.error("Login error:", error);
         } finally {
             setIsLoading(false);

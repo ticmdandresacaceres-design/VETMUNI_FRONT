@@ -1,5 +1,4 @@
 import axios from "axios";
-import { toast } from "sonner";
 import type { ApiErrorResponse } from "./types";
 import { tokenStorage } from "./token-storage";
 
@@ -66,31 +65,14 @@ apiClient.interceptors.response.use(
                     (errorType === 'InvalidCredentials' && message.includes('bloqueada'));
 
                 if (isBlocked) {
-                    // Cuenta bloqueada - Mostrar toast aquí
-                    toast.error(data?.message || "Tu cuenta ha sido bloqueada. Contacta al administrador.", {
-                        duration: 5000,
-                        position: "bottom-right",
-                    });
-
-                    // Lanzar el error para que el servicio lo maneje
                     throw new ApiError(apiErrorData.message || "Error de autenticación", status, apiErrorData);
                 }
                 if (!isLoginEndpoint) {
                     tokenStorage.clearAll();
 
-                    toast.error("Tu sesión ha expirado. Por favor, inicia sesión nuevamente.", {
-                        duration: 4000,
-                        position: "bottom-right"
-                    });
-
                     setTimeout(() => {
                         window.location.href = '/login';
                     }, 1000);
-                } else {
-                    toast.error(data?.message || "Credenciales inválidas. Verifica tu email y contraseña.", {
-                        duration: 4000,
-                        position: "bottom-right",
-                    });
                 }
 
                 // Lanzar el error
@@ -109,19 +91,9 @@ apiClient.interceptors.response.use(
                 if (isBlocked) {
                     tokenStorage.clearAll();
 
-                    toast.error("Tu cuenta ha sido bloqueada. Contacta al administrador.", {
-                        duration: 5000,
-                        position: "bottom-right",
-                    });
-
                     setTimeout(() => {
                         window.location.href = '/login';
                     }, 1500);
-                } else {
-                    toast.error("No tienes permisos para realizar esta acción.", {
-                        duration: 4000,
-                        position: "bottom-right"
-                    });
                 }
 
                 throw new ApiError(apiErrorData.message || "Error de acceso denegado", status, apiErrorData);
@@ -137,11 +109,6 @@ apiClient.interceptors.response.use(
 
         // Error de conexión
         if (error.request) {
-            toast.error("No se pudo conectar al servidor. Verifica tu conexión.", {
-                duration: 4000,
-                position: "bottom-right"
-            });
-
             throw new ApiError(
                 "Error de conexión - no se pudo conectar al servidor",
                 0,
