@@ -107,14 +107,14 @@ export default function PacientesCatalog() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Pacientes</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Mascotas</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Control veterinario y gestión de pacientes
+            Control veterinario y gestión de mascotas
           </p>
         </div>
         <Button onClick={() => router.push("/dashboard/registro")} className="gap-2">
           <Plus className="w-4 h-4" />
-          Nuevo Paciente
+          Nueva Mascota
         </Button>
       </div>
 
@@ -174,7 +174,7 @@ export default function PacientesCatalog() {
             <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
               <PawPrint className="w-8 h-8 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-medium mb-1">No se encontraron pacientes</h3>
+            <h3 className="text-lg font-medium mb-1">No se encontraron mascotas</h3>
             <p className="text-sm text-muted-foreground mb-6 text-center max-w-sm">
               {search ? "Intenta con otros términos de búsqueda" : "Registra tu primer paciente para comenzar"}
             </p>
@@ -202,7 +202,7 @@ export default function PacientesCatalog() {
       {!search && mascotasData?.pagination && (
         <div className="flex items-center justify-between pt-2">
           <p className="text-sm text-muted-foreground">
-            Mostrando {displayedPets.length} de {mascotasData.pagination.total} pacientes
+            Mostrando {displayedPets.length} de {mascotasData.pagination.total} mascotas
           </p>
           <div className="flex gap-2">
             <Button

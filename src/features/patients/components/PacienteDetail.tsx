@@ -1,14 +1,13 @@
 "use client";
 
-import { useState, useMemo, useRef } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useCombinedPetWithOwner } from "../hooks/usePacientes";
-import { getVaccineStatus } from "../hooks/usePacientes";
 import { useCreateVacuna } from "../../vaccines/hooks/useVacunas";
 import { useDeleteMascota, useUploadPetImage, useDeletePetImage } from "../hooks/useMascotas";
 import VaccineTimeline from "./VaccineTimeline";
 import type { VaccineStatus } from "../types";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -143,9 +142,9 @@ export default function PacienteDetail({ petId }: PacienteDetailProps) {
     if (!mascota) return;
     try {
       await generateMascotaPDF(mascota);
-      toast.success("DIM generado correctamente");
+      toast.success("DNI generado correctamente");
     } catch {
-      toast.error("Error al generar el DIM");
+      toast.error("Error al generar el DNI");
     }
   };
 
@@ -236,7 +235,7 @@ export default function PacienteDetail({ petId }: PacienteDetailProps) {
         <div className="flex gap-2">
           <Button variant="outline" size="sm" className="gap-1.5" onClick={handleGenerateDIM}>
             <FileImage className="w-4 h-4" />
-            DIM
+            DNI
           </Button>
           <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setShowAddVaccine(true)}>
             <Syringe className="w-4 h-4" />

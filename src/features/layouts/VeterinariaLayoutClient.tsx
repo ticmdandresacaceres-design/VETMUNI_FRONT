@@ -314,7 +314,11 @@ export default function VeterinariaLayoutClient({ children }: VeterinariaLayoutP
                 <h1 className="text-lg font-semibold">Panel Veterinario</h1>
               </div>
               <Badge variant="secondary" className="hidden md:flex">
-                {Array.isArray(user?.role) ? user.role.join(', ') : user?.role || 'Veterinaria'}
+                {Array.isArray(user?.role)
+                  ? user.role.map((role) => (role === 'VETERINARIAN' ? 'Veterinaria' : role)).join(', ')
+                  : user?.role === 'VETERINARIAN'
+                    ? 'Veterinario'
+                    : user?.role || 'Veterinario'}
               </Badge>
             </div>
 
