@@ -138,7 +138,7 @@ export default function DuenosList() {
                   <UserCheck className="h-4 w-4 text-primary" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Usuarios Activos</p>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Por páginas</p>
                   <p className="text-xl font-bold">{totalActivos}</p>
                 </div>
               </div>
