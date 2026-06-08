@@ -94,6 +94,7 @@ export default function PacienteDetail({ petId }: PacienteDetailProps) {
   const [vaccineDate, setVaccineDate] = useState(new Date().toISOString().split("T")[0]);
   const [vaccineMonths, setVaccineMonths] = useState("12");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showDeleteImageConfirm, setShowDeleteImageConfirm] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showImageDialog, setShowImageDialog] = useState(false);
@@ -281,7 +282,7 @@ export default function PacienteDetail({ petId }: PacienteDetailProps) {
                       variant="destructive"
                       size="icon"
                       className="absolute -top-1 -right-1 rounded-full w-7 h-7 shadow-md"
-                      onClick={handleDeleteImage}
+                      onClick={() => setShowDeleteImageConfirm(true)}
                       disabled={deleteImage.isPending}
                     >
                       {deleteImage.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <X className="w-3.5 h-3.5" />}
@@ -429,6 +430,26 @@ export default function PacienteDetail({ petId }: PacienteDetailProps) {
             </Button>
             <Button variant="destructive" onClick={handleDelete} disabled={deleteMascota.isPending}>
               {deleteMascota.isPending ? "Eliminando..." : "Eliminar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Image Confirm Dialog */}
+      <Dialog open={showDeleteImageConfirm} onOpenChange={setShowDeleteImageConfirm}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Eliminar foto</DialogTitle>
+            <DialogDescription>
+              ¿Estás seguro de eliminar la foto de {mascota.name}? Esta acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowDeleteImageConfirm(false)}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteImage} disabled={deleteImage.isPending}>
+              {deleteImage.isPending ? "Eliminando..." : "Eliminar"}
             </Button>
           </DialogFooter>
         </DialogContent>
