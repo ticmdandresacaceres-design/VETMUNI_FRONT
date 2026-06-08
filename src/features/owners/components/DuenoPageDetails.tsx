@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useDueno } from '../hooks/useDuenos';
-import { useGetMascotasByOwner } from '../../patients/hooks/useMascotas';
+import { useGetMascotasByOwner } from '../../patients/hooks/usePacientes';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';

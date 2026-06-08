@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useVaccineAlerts, useUnvaccinatedPets } from "../hooks/usePacientes";
+import { useVaccineAlerts, useUnvaccinatedPets } from "../../dashboard/hooks/useStats";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useDuenos, useCreateDueno, useGetMascotasByOwner, useCreateMascota, useCreateVacuna } from "../hooks/usePacientes";
+import { useDuenos, useCreateDueno } from "../../owners/hooks/useDuenos";
+import { useGetMascotasByOwner, useCreateMascota } from "../hooks/usePacientes";
+import { useCreateVacuna } from "../../vaccines/hooks/useVacunas";
 import type { Dueno } from "../../owners/types";
 import type { Mascota } from "../types";
 import { Button } from "@/components/ui/button";

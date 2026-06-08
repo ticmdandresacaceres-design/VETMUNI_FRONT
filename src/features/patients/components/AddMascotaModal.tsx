@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/select"
 import { ConfirmDialog } from "@/src/shared/components/ConfirmDialog"
 import { useConfirmDialog } from "@/src/shared/hooks/useConfirmDialog"
-import { useCreateMascota } from "../hooks/useMascotas"
+import { useCreateMascota } from "../hooks/usePacientes"
 import type { CreateMascotaRequest } from "../types"
 
 const formSchema = z.object({

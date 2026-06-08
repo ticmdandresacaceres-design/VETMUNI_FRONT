@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { MoreHorizontal, Phone, Mail, IdCard, UserCheck, UserX, Edit, Trash2 } from "lucide-react"
 import {
   Table,
@@ -101,12 +101,11 @@ export default function VetsList() {
 
   return (
     <>
-      <div className="flex justify-end mb-4">
-        <Button onClick={() => setIsRegisterModalOpen(true)}>
-          Registrar Veterinario
-        </Button>
-      </div>
-
+       <div className="flex items-center  justify-end mb-4">
+        <RegisterFormModal
+        open={isRegisterModalOpen}
+        onOpenChange={setIsRegisterModalOpen}/>
+       </div>
       <div className="rounded-xl border overflow-hidden">
         <Table>
           <TableHeader>
@@ -229,11 +228,6 @@ export default function VetsList() {
           </TableBody>
         </Table>
       </div>
-
-      <RegisterFormModal
-        open={isRegisterModalOpen}
-        onOpenChange={setIsRegisterModalOpen}
-      />
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>

@@ -55,23 +55,16 @@ import {
     UserPlus,
 } from "lucide-react";
 import { useVeterinarios, useDeleteVeterinario, useUpdateVeterinario } from "@/src/features/admin/hooks/useVet";
-import { useDuenos } from "@/src/features/owners/hooks/useDuenos";
-import { useMascotas } from "@/src/features/patients/hooks/useMascotas";
-import { useVacunas } from "@/src/features/vaccines/hooks/useVacunas";
+import { useDashboardStats } from "@/src/features/dashboard/hooks/useStats";
 import { useAuthContext } from "@/src/features/auth/context/AuthContext";
 import type { Veterinario } from "@/src/features/admin/types";
 
 export default function AdminDashboardContent() {
     const { user } = useAuthContext();
-    const { data: veterinariansResult, isLoading: vetsLoading } = useVeterinarios();
-    const { data: duenosResult, isLoading: duenosLoading } = useDuenos();
-    const { data: mascotasResult, isLoading: mascotasLoading } = useMascotas();
-    const { data: vacunasResult, isLoading: vacunasLoading } = useVacunas();
+    const { data: veterinarians, isLoading: vetsLoading } = useVeterinarios();
+    const { data: stats, isLoading: statsLoading } = useDashboardStats();
 
-    const veterinarians = veterinariansResult ?? [];
-    const duenos = duenosResult?.data ?? [];
-    const mascotas = mascotasResult?.data ?? [];
-    const vacunas = vacunasResult?.data ?? [];
+    const veterinariansList = veterinarians ?? [];
 
     const deleteVetMutation = useDeleteVeterinario();
     const updateVetMutation = useUpdateVeterinario();
@@ -82,23 +75,16 @@ export default function AdminDashboardContent() {
     const [editPhone, setEditPhone] = useState("");
     const [editAddress, setEditAddress] = useState("");
 
-    const totalVets = veterinarians.length;
-    const activeVets = veterinarians.filter(vet => vet.active).length;
-    const totalDuenos = duenos.length;
-    const totalMascotas = mascotas.length;
-    const totalVacunas = vacunas.length;
-
-    const currentMonth = new Date().getMonth();
-    const vacunasThisMonth = vacunas.filter(vacuna => {
-        const [y, m, d] = vacuna.aplication_date.split("T")[0].split("-").map(Number);
-        const vacunaDate = new Date(y, m - 1, d);
-        return vacunaDate.getMonth() === currentMonth;
-    }).length;
+    const totalVets = veterinariansList.length;
+    const activeVets = veterinariansList.filter(vet => vet.active).length;
+    const totalDuenos = stats?.total_owners ?? 0;
+    const totalMascotas = stats?.total_pets ?? 0;
+    const vacunasThisMonth = stats?.vaccinated_this_month ?? 0;
 
     const currentHour = new Date().getHours();
     const greeting = currentHour < 12 ? "Buenos días" : currentHour < 18 ? "Buenas tardes" : "Buenas noches";
 
-    const isLoading = vetsLoading || duenosLoading || mascotasLoading || vacunasLoading;
+    const isLoading = vetsLoading || statsLoading;
 
     const handleDeleteConfirm = async () => {
         if (vetToDelete) {
@@ -177,14 +163,14 @@ export default function AdminDashboardContent() {
                             </div>
                             <Badge variant="secondary">{isLoading ? "..." : totalDuenos}</Badge>
                         </div>
-                        <CardTitle className="text-lg">Propietarios</CardTitle>
+                        <CardTitle className="text-lg">Dueños</CardTitle>
                     </CardHeader>
                     <CardContent>
                         {isLoading ? (
                             <Skeleton className="h-4 w-full" />
                         ) : (
                             <p className="text-sm text-muted-foreground">
-                                Clientes registrados
+                                Dueño registrados
                             </p>
                         )}
                     </CardContent>
@@ -226,7 +212,7 @@ export default function AdminDashboardContent() {
                             <Skeleton className="h-4 w-full" />
                         ) : (
                             <p className="text-sm text-muted-foreground">
-                                Este mes ({totalVacunas} total)
+                                Vacunas aplicadas este mes
                             </p>
                         )}
                     </CardContent>
@@ -274,14 +260,14 @@ export default function AdminDashboardContent() {
                                         <TableCell><Skeleton className="h-8 w-8" /></TableCell>
                                     </TableRow>
                                 ))
-                            ) : veterinarians.length === 0 ? (
+                            ) : veterinariansList.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={4} className="h-32 text-center text-muted-foreground">
                                         No hay veterinarios registrados
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                veterinarians.map((vet) => (
+                                veterinariansList.map((vet) => (
                                     <TableRow key={vet.id}>
                                         <TableCell className="font-medium">{vet.name}</TableCell>
                                         <TableCell className="text-muted-foreground">{vet.email}</TableCell>
@@ -328,7 +314,7 @@ export default function AdminDashboardContent() {
 
                     <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
                         <p>
-                            {veterinarians.length} veterinario{veterinarians.length !== 1 ? "s" : ""} registrado{veterinarians.length !== 1 ? "s" : ""}
+                            {veterinariansList.length} veterinario{veterinariansList.length !== 1 ? "s" : ""} registrado{veterinariansList.length !== 1 ? "s" : ""}
                         </p>
                         <Link href="/dashboard/veterinarios">
                             <Button variant="ghost" size="sm">
@@ -370,7 +356,7 @@ export default function AdminDashboardContent() {
                                         <Users className="h-5 w-5 text-primary" />
                                     </div>
                                     <div>
-                                        <p className="text-lg font-semibold">Clientes</p>
+                                        <p className="text-lg font-semibold">Dueños</p>
                                         <p className="text-sm text-muted-foreground">{totalDuenos} registrados</p>
                                     </div>
                                 </div>
@@ -380,7 +366,7 @@ export default function AdminDashboardContent() {
                     </Card>
                 </Link>
 
-                <Link href="/dashboard/mascotas">
+                <Link href="/dashboard/pacientes">
                     <Card className="group hover:bg-accent/50 transition-colors cursor-pointer">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">

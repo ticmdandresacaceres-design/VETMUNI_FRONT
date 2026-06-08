@@ -1,21 +1,140 @@
 import { useMemo } from "react";
-import { useMascota, useMascotas, useGetMascotasByOwner } from "../hooks/useMascotas";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
+import * as MascotaService from "../services/MascotaService";
 import { useVacunasPorMascota } from "../../vaccines/hooks/useVacunas";
 import { useDueno } from "../../owners/hooks/useDuenos";
-import type { VaccineStatus, VaccineStatusInfo } from "../types";
+import type { CreateMascotaRequest, UpdateMascotaRequest, VaccineStatus, VaccineStatusInfo } from "../types";
 import type { Mascota } from "../types";
 import type { Vacuna } from "../../vaccines/types";
+import { toast } from "sonner";
 
-export type { Mascota } from "../types";
-export type { Dueno } from "../../owners/types";
-export type { Vacuna } from "../../vaccines/types";
-export { useMascotas, useGetMascotasByOwner } from "../hooks/useMascotas";
-export { useMascota } from "../hooks/useMascotas";
-export { useDueno, useDuenos, useCreateDueno, useUpdateDueno, useDeleteDueno } from "../../owners/hooks/useDuenos";
-export { useVacunasPorMascota, useCreateVacuna, useDeleteVacuna } from "../../vaccines/hooks/useVacunas";
-export { useCreateMascota, useUpdateMascota, useDeleteMascota, useSearchMascotas } from "../hooks/useMascotas";
-export { useVaccineAlerts, useUnvaccinatedPets, useDashboardStats, useMonthlyActivity, useSpeciesDistribution } from "../../dashboard/hooks/useStats";
-export { useDueno as useOwner } from "../../owners/hooks/useDuenos";
+// --- Query Keys ---
+
+export const mascotaKeys = {
+  all: ["mascotas"] as const,
+  lists: (params?: MascotaService.GetMascotasParams) => [...mascotaKeys.all, "list", params] as const,
+  details: () => [...mascotaKeys.all, "detail"] as const,
+  detail: (id: string) => [...mascotaKeys.details(), id] as const,
+  search: (query: string) => [...mascotaKeys.all, "search", query] as const,
+};
+
+// --- CRUD Hooks ---
+
+export const useMascotas = (params?: MascotaService.GetMascotasParams) => {
+  return useQuery({
+    queryKey: mascotaKeys.lists(params),
+    queryFn: () => MascotaService.getMascotas(params),
+    placeholderData: keepPreviousData,
+  });
+};
+
+export const useMascota = (id: string) => {
+  return useQuery({
+    queryKey: mascotaKeys.detail(id),
+    queryFn: () => MascotaService.getMascotaById(id),
+    enabled: !!id,
+  });
+};
+
+export const useCreateMascota = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: CreateMascotaRequest) => MascotaService.createMascota(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: mascotaKeys.lists() });
+      toast.success("Mascota registrada correctamente");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Error al registrar la mascota");
+    },
+  });
+};
+
+export const useUpdateMascota = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateMascotaRequest }) =>
+      MascotaService.updateMascota(id, data),
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: mascotaKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: mascotaKeys.detail(id) });
+      toast.success("Mascota actualizada correctamente");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Error al actualizar la mascota");
+    },
+  });
+};
+
+export const useDeleteMascota = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => MascotaService.deleteMascota(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: mascotaKeys.lists() });
+      toast.success("Mascota eliminada correctamente");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Error al eliminar la mascota");
+    },
+  });
+};
+
+// --- Image Hooks ---
+
+export const useUploadPetImage = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ petId, image }: { petId: string; image: File }) =>
+      MascotaService.uploadPetImage(petId, image),
+    onSuccess: (_, { petId }) => {
+      queryClient.invalidateQueries({ queryKey: mascotaKeys.detail(petId) });
+      toast.success("Imagen subida correctamente");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Error al subir la imagen");
+    },
+  });
+};
+
+export const useDeletePetImage = (petId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (imageId: string) => MascotaService.deletePetImage(imageId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: mascotaKeys.detail(petId) });
+      toast.success("Imagen eliminada correctamente");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Error al eliminar la imagen");
+    },
+  });
+};
+
+// --- Query Hooks ---
+
+export const useGetMascotasByOwner = (ownerId: string) => {
+  return useQuery({
+    queryKey: ["mascotas", "owner", ownerId],
+    queryFn: () => MascotaService.getMascotasByOwner(ownerId),
+    enabled: !!ownerId,
+  });
+};
+
+export const useSearchMascotas = (query: string) => {
+  return useQuery({
+    queryKey: ["mascotas", "search", query],
+    queryFn: () => MascotaService.searchMascotas(query),
+    enabled: !!query,
+  });
+};
+
+// --- Vaccine Status Utilities ---
 
 export function getVaccineStatus(vacunas: Vacuna[] | undefined): VaccineStatusInfo {
   if (!vacunas || vacunas.length === 0) {
